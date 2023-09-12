@@ -1,0 +1,1 @@
+This project creates the terrain for an ASCII character based Pokemon game. It uses a queue data structure to generate points and build off of those points in a circle to generate the terrain. The roads and Pokecenter/Pokemarts are placed afterwards
