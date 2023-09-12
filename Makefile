@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -ggdb -Wall -Werror
 
-all: clean run
+all: run
 
 run: main.o terrain_generation.o queue.o
 	$(CC) $(CFLAGS) main.o terrain_generation.o queue.o -o run

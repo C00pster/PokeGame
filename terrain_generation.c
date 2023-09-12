@@ -4,19 +4,19 @@
 #include "queue.h"
 
 #define ARR_MAX 800
-#define x_width 80
-#define y_width 21
+#define X_WIDTH 80
+#define Y_WIDTH 21
 
 char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length) {
     __int8_t i,j;
     //TODO - creates memory leak
-    char** map = (char**)malloc(y_width * sizeof(char*));
+    char** map = (char**)malloc(Y_WIDTH * sizeof(char*));
     if (!map) {
         printf("Error allocating memory for map\n");
         return NULL;
     }
-    for (i = 0; i < y_width; i++) {
-        map[i] = malloc (x_width * sizeof(char));
+    for (i = 0; i < Y_WIDTH; i++) {
+        map[i] = malloc (X_WIDTH * sizeof(char));
         if (!map[i]) {
             printf("Error allocating memory for map\n");
             return NULL;
@@ -26,19 +26,19 @@ char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length
 
     //Generates random starter points
     for (i = 0; i < start_char_arr_length; i++) {
-        Point* new_point = generate_point(1, x_width-2, 1, y_width-2);
+        Point* new_point = generate_point(1, X_WIDTH-2, 1, Y_WIDTH-2);
         map[new_point->y][new_point->x] = starter_char_vals[i];
         enqueue(q, new_point);
     }
 
     //Sets mountain border
-    for (i = 0; i < x_width; i++) {
+    for (i = 0; i < X_WIDTH; i++) {
         map[0][i] = '%';
-        map[y_width-1][i] = '%';
+        map[Y_WIDTH-1][i] = '%';
     }
-    for (i = 1; i < y_width - 1; i++) {
+    for (i = 1; i < Y_WIDTH - 1; i++) {
         map[i][0] = '%';
-        map[i][x_width-1] = '%';
+        map[i][X_WIDTH-1] = '%';
     }
 
     //Fills map in from starter points
@@ -49,7 +49,7 @@ char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length
         for (j = -1; j < 2; j++) {
             for (i = -1; i < 2; i++) {
                 Point* new_point = create_point(p->x + i, p->y + j);
-                if (new_point->y > 0 && new_point->y < y_width-1 && new_point->x > 0 && new_point->x < x_width - 1) {
+                if (new_point->y > 0 && new_point->y < Y_WIDTH-1 && new_point->x > 0 && new_point->x < X_WIDTH - 1) {
                     if (map[new_point->y][new_point->x] == 0) {
                         map[new_point->y][new_point->x] = c;
                         enqueue(q, new_point);
@@ -67,10 +67,10 @@ void generate_path(char** map) {
     __int8_t pokimart_val, pokicenter_val, i, j;
 
     //Sets the entrance coordinates, vertical, and horizontal path cols/rows
-    left_road = 5 + rand() % (y_width - 10);
-    right_road = 5 + rand() % (y_width - 10);
-    top_road = 5 + rand() % (x_width - 10);
-    bottom_road = 5 + rand() % (x_width - 10);
+    left_road = 5 + rand() % (Y_WIDTH - 10);
+    right_road = 5 + rand() % (Y_WIDTH - 10);
+    top_road = 5 + rand() % (X_WIDTH - 10);
+    bottom_road = 5 + rand() % (X_WIDTH - 10);
     if (left_road ==  right_road) {
         horizontal_path_row = left_road;
         left_greater = 0;
@@ -95,9 +95,9 @@ void generate_path(char** map) {
     //Creates a 3 tile long path out from each entrance
     for (i = 0; i < 3; i++) {
         map[i][bottom_road] = '#';
-        map[y_width - i - 1][top_road] = '#';
+        map[Y_WIDTH - i - 1][top_road] = '#';
         map[left_road][i] = '#';
-        map[right_road][x_width - i - 1] = '#';
+        map[right_road][X_WIDTH - i - 1] = '#';
     }
 
     //Creates a path from the path entrance column or row to the vertical or horizontal cross
@@ -107,7 +107,7 @@ void generate_path(char** map) {
             left_road--;
         }
         while (right_road != horizontal_path_row) {
-            map[right_road][x_width-4] = '#';
+            map[right_road][X_WIDTH-4] = '#';
             right_road++;
         }
     } else if (left_greater == -1) {
@@ -116,7 +116,7 @@ void generate_path(char** map) {
             left_road++;
         }
         while (right_road != horizontal_path_row) {
-            map[right_road][x_width-4] = '#';
+            map[right_road][X_WIDTH-4] = '#';
             right_road--;
         }
     }
@@ -126,7 +126,7 @@ void generate_path(char** map) {
             bottom_road--;
         }
         while (top_road != vertical_path_col) {
-            map[y_width-4][top_road] = '#';
+            map[Y_WIDTH-4][top_road] = '#';
             top_road++;
         }
     } else if (bottom_greater == -1) {
@@ -135,16 +135,16 @@ void generate_path(char** map) {
             bottom_road++;
         }
         while (top_road != vertical_path_col) {
-            map[y_width-4][top_road] = '#';
+            map[Y_WIDTH-4][top_road] = '#';
             top_road--;
         }
     }
 
     //Creates perpendicular paths across the map to connect all entrances
-    for (i = 3; i < x_width - 3; i++) {
+    for (i = 3; i < X_WIDTH - 3; i++) {
         map[horizontal_path_row][i] = '#';
     }
-    for (i = 3; i < y_width - 3; i++) {
+    for (i = 3; i < Y_WIDTH - 3; i++) {
         map[i][vertical_path_col] = '#';
     }
 
@@ -152,14 +152,14 @@ void generate_path(char** map) {
     pokicenter_val = horizontal_path_row;
     pokimart_val = vertical_path_col;
     while (pokicenter_val - horizontal_path_row < 1 && pokicenter_val - horizontal_path_row > -3) {
-        pokicenter_val = 4 + rand() % (y_width - 4 - 6 + 1);
+        pokicenter_val = 4 + rand() % (Y_WIDTH - 4 - 6 + 1);
     }
     while (abs(pokimart_val - vertical_path_col) < 2) {
-        pokimart_val = 4 + rand() % (x_width - 4 - 6 + 1);
+        pokimart_val = 4 + rand() % (X_WIDTH - 4 - 6 + 1);
     }
 
-    i = horizontal_path_row < (y_width / 2) ? 1 : -1;
-    j = vertical_path_col < (x_width / 2) ? 1 : -1;
+    i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
+    j = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
 
     map[horizontal_path_row + (1 * i)][pokimart_val] = 'M';
     map[horizontal_path_row + (1 * i)][pokimart_val + 1] = 'M';
