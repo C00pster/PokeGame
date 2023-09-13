@@ -22,25 +22,25 @@ typedef struct {
     __int8_t top, bottom, left, right;
 } Path_Tracker;
 
-Path_Tracker* get_paths(Map*** map, __uint8_t x, __uint8_t y) {
+Path_Tracker* get_paths(Map*** map, int x, int y) {
     Path_Tracker* path_tracker = (Path_Tracker*)malloc(sizeof(Path_Tracker));
 
-    if (x + 1 <= SIZE) {
-        if (map[y][x] != NULL) {
+    if (x + 1 < SIZE) {
+        if (map[y][x+1] != NULL) {
             path_tracker->right = map[y][x+1]->left_path;
         } else path_tracker->right = 0;
     } else path_tracker->right = -1;
-    if (x - 1 >= 0) {
+    if (x - 1 > 0) {
         if (map[y][x-1] != NULL) {
             path_tracker->left = map[y][x-1]->right_path;
         } else path_tracker->left = 0;
     } else path_tracker->left = -1;
-    if (y + 1 <= SIZE) {
+    if (y + 1 < SIZE) {
         if (map[y+1][x] != NULL) {
             path_tracker->bottom = map[y+1][x]->top_path;
         } else path_tracker->bottom = 0;
     } else path_tracker->bottom = -1;
-    if (y - 1 >= 0) {
+    if (y - 1 > 0) {
         if (map[y-1][x] != NULL) {
             path_tracker->top = map[y-1][x]->bottom_path;
         } else path_tracker->top = 0;
