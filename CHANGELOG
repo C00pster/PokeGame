@@ -1,3 +1,11 @@
+9/12/2023 7:30p
+    Added:
+        World array
+        Path location tracking
+        Go north command
+        Quit command
+        No paths on world borders
+
 9/12/2023 11:00a
     Added main.c and updated Makefile to compile to ./run
 
