@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     srand(time(NULL));
     int x = 0, y = 0;
     int i, j, k;
-    char input = ' ';
+    char input;
 
     Map ***world = (Map***)malloc(sizeof(Map***) * SIZE); //Creates an array of pointers to maps
     if (!world) {
@@ -72,25 +72,77 @@ int main(int argc, char* argv[]) {
 
     print_map(world[INDEX(y)][INDEX(x)]->map); //Prints the map
 
-    while (input != 'q'){
-        printf("You are at (%d,%d)\nEnter a command: ", x, y);
-        scanf("%c", &input);
+    do {
+        printf("You are at (%d,%d)\tEnter a command: ", x, y);
+        input = getc(stdin);
+        while ((getchar()) != '\n'); //Clears the newline character from the input buffer
+        printf("\n");
 
-        if (input=='n'){
-            if (INDEX(y+1) >= SIZE) {
-                printf("You can't go that way\n");
-                continue;
-            } else {
-                y++;
-                if (world[INDEX(y)][INDEX(x)] == NULL) {
-                    Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
-                    world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
-                    free(p);
+        switch (input) {
+            case 'n':
+                if (INDEX(y+1) >= SIZE) {
+                    printf("You can't go that way\n");
+                    continue;
+                } else {
+                    y++;
+                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                        Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        free(p);
+                    }
+                    print_map(world[INDEX(y)][INDEX(x)]->map);
                 }
-                print_map(world[INDEX(y)][INDEX(x)]->map);
-            }
+                break;
+            
+            case 's':
+                if (INDEX(y-1) < 0) {
+                    printf("You can't go that way\n");
+                    continue;
+                } else {
+                    y--;
+                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                        Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        free(p);
+                    }
+                    print_map(world[INDEX(y)][INDEX(x)]->map);
+                }
+                break;
+
+            case 'e':
+                if (INDEX(x+1) >= SIZE) {
+                    printf("You can't go that way\n");
+                    continue;
+                } else {
+                    x++;
+                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                        Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        free(p);
+                    }
+                    print_map(world[INDEX(y)][INDEX(x)]->map);
+                }
+                break;
+
+            case 'w':
+                if (INDEX(x-1) < 0) {
+                    printf("You can't go that way\n");
+                    continue;
+                } else {
+                    x--;
+                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                        Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        free(p);
+                    }
+                }
+                break;
+
+            default:
+                printf("Invalid command\n");
+                break;
         }
-    }
+    } while (input != 'q');
 
     //Memory cleanup
     if (world == NULL) return 0;
