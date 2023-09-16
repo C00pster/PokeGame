@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "queue.h"
 #include "map_generation.h"
 
@@ -22,6 +23,7 @@ char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length
             printf("Error allocating memory for map\n");
             return NULL;
         }
+        memset(map[i], '\0', X_WIDTH);
     }
     Queue* q = create_queue(ARR_MAX);
 
@@ -47,11 +49,11 @@ char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length
         Point* p = dequeue(q);
         char c = map[p->y][p->x];
 
-        for (j = -1; j < 2; j++) {
-            for (i = -1; i < 2; i++) {
+        for (j = -1; j <= 1; j++) {
+            for (i = -2; i <= 2; i++) {
                 Point* new_point = create_point(p->x + i, p->y + j);
                 if (new_point->y > 0 && new_point->y < Y_WIDTH-1 && new_point->x > 0 && new_point->x < X_WIDTH - 1) {
-                    if (map[new_point->y][new_point->x] == 0) {
+                    if (!map[new_point->y][new_point->x]) {
                         map[new_point->y][new_point->x] = c;
                         enqueue(q, new_point);
                     }
@@ -200,8 +202,8 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
 }
 
 Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path) {
-    char starter_char_vals[6] = {':',':','^','%','.','.'};
-    __uint8_t start_char_arr_length = 6;
+    char starter_char_vals[7] = {':','.','^',':','.','%',':'};
+    __uint8_t start_char_arr_length = 7;
 
     Map* m = (Map*)malloc(sizeof(Map));
     if (!m) {

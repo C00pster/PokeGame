@@ -1,6 +1,7 @@
 #include "map_generation.h"
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 #define X_WIDTH 80
 #define Y_WIDTH 21
@@ -26,22 +27,22 @@ Path_Tracker* get_paths(Map*** map, int x, int y) {
     Path_Tracker* path_tracker = (Path_Tracker*)malloc(sizeof(Path_Tracker));
 
     if (x + 1 < SIZE) {
-        if (map[y][x+1] != NULL) {
+        if (map[y][x+1]) {
             path_tracker->right = map[y][x+1]->left_path;
         } else path_tracker->right = 0;
     } else path_tracker->right = -1;
     if (x - 1 > 0) {
-        if (map[y][x-1] != NULL) {
+        if (map[y][x-1]) {
             path_tracker->left = map[y][x-1]->right_path;
         } else path_tracker->left = 0;
     } else path_tracker->left = -1;
     if (y + 1 < SIZE) {
-        if (map[y+1][x] != NULL) {
+        if (map[y+1][x]) {
             path_tracker->bottom = map[y+1][x]->top_path;
         } else path_tracker->bottom = 0;
     } else path_tracker->bottom = -1;
     if (y - 1 > 0) {
-        if (map[y-1][x] != NULL) {
+        if (map[y-1][x]) {
             path_tracker->top = map[y-1][x]->bottom_path;
         } else path_tracker->top = 0;
     } else path_tracker->top = -1;
@@ -66,6 +67,7 @@ int main(int argc, char* argv[]) {
             printf("Error allocating memory for world\n");
             return 1;
         }
+        memset(world[i], '\0', sizeof(Map*) * SIZE);
     }
 
     world[INDEX(y)][INDEX(x)] = generate_map(0, 0, 0, 0); //Generates map at the origin
@@ -75,14 +77,13 @@ int main(int argc, char* argv[]) {
     do {
         printf("You are at (%d,%d)\tEnter a command: ", x, y);
         input = getc(stdin);
-        while ((getchar()) != '\n'); //Clears the newline character from the input buffer
         printf("\n");
 
         switch (input) {
             case 'n':
                 if (INDEX(y+1) >= SIZE) {
                     printf("You can't go that way\n");
-                    continue;
+                    break;
                 } else {
                     y++;
                     if (world[INDEX(y)][INDEX(x)] == NULL) {
@@ -97,10 +98,10 @@ int main(int argc, char* argv[]) {
             case 's':
                 if (INDEX(y-1) < 0) {
                     printf("You can't go that way\n");
-                    continue;
+                    break;
                 } else {
                     y--;
-                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                    if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
                         world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
                         free(p);
@@ -112,10 +113,10 @@ int main(int argc, char* argv[]) {
             case 'e':
                 if (INDEX(x+1) >= SIZE) {
                     printf("You can't go that way\n");
-                    continue;
+                    break;
                 } else {
                     x++;
-                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                    if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
                         world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
                         free(p);
@@ -127,14 +128,33 @@ int main(int argc, char* argv[]) {
             case 'w':
                 if (INDEX(x-1) < 0) {
                     printf("You can't go that way\n");
-                    continue;
+                    break;
                 } else {
                     x--;
-                    if (world[INDEX(y)][INDEX(x)] == NULL) {
+                    if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
                         world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
                         free(p);
                     }
+                    print_map(world[INDEX(y)][INDEX(x)]->map);
+                }
+                break;
+
+            case 'f':
+                int x_fly, y_fly;
+                scanf(" %d %d", &x_fly, &y_fly);
+                if (INDEX(x_fly) < 0 || INDEX(x_fly) >= SIZE || INDEX(y_fly) < 0 || INDEX(y_fly) >= SIZE) {
+                    printf("Invalid coordinates\n");
+                    break;
+                } else {
+                    x = x_fly;
+                    y = y_fly;
+                    if (!world[INDEX(y)][INDEX(x)]) {
+                        Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        free(p);
+                    }
+                    print_map(world[INDEX(y)][INDEX(x)]->map);
                 }
                 break;
 
@@ -142,6 +162,7 @@ int main(int argc, char* argv[]) {
                 printf("Invalid command\n");
                 break;
         }
+        while (getc(stdin) != '\n'); //Clears stdin
     } while (input != 'q');
 
     //Memory cleanup

@@ -1,1 +1,5 @@
 This project creates the terrain for an ASCII character based Pokemon game. It uses a queue data structure to generate points and build off of those points in a circle to generate the terrain. The roads and Pokecenter/Pokemarts are placed afterwards
+
+BUGS:
+    There has been an instance of loading the terrain where the terrain generates .^. in a diamond progression with a 1 tile border of tall grass on the border. Although this is cool and could represent a much better forrest, this is unintended functionality, so it is 
+    a bug. This "feature" will be monitored for unintended functionality.
