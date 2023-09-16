@@ -16,7 +16,7 @@ queue.o: queue.c queue.h
 	$(CC) $(CFLAGS) -c queue.c
 
 tgz: clean
-	tar cvzf Assignment1_Cooper-McKee.tgz --exclude=.vscode *
+	tar cvzf Assignment1_Cooper-McKee.tgz --exclude=.vscode --exclude=.gitignore *
 
 clean:
 	rm -f *.o map_generation *.tgz run
