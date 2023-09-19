@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>
 
 #define X_WIDTH 80
 #define Y_WIDTH 21
@@ -70,7 +71,7 @@ int main(int argc, char* argv[]) {
         memset(world[i], '\0', sizeof(Map*) * SIZE);
     }
 
-    world[INDEX(y)][INDEX(x)] = generate_map(0, 0, 0, 0); //Generates map at the origin
+    world[INDEX(y)][INDEX(x)] = generate_map(0, 0, 0, 0, 0); //Generates map at the origin
 
     print_map(world[INDEX(y)][INDEX(x)]->map); //Prints the map
 
@@ -88,7 +89,8 @@ int main(int argc, char* argv[]) {
                     y++;
                     if (world[INDEX(y)][INDEX(x)] == NULL) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
-                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        int distance = sqrt(pow(x, 2) + pow(y, 2));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right, distance);
                         free(p);
                     }
                     print_map(world[INDEX(y)][INDEX(x)]->map);
@@ -103,7 +105,8 @@ int main(int argc, char* argv[]) {
                     y--;
                     if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
-                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        int distance = sqrt(pow(x, 2) + pow(y, 2));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right, distance);
                         free(p);
                     }
                     print_map(world[INDEX(y)][INDEX(x)]->map);
@@ -118,7 +121,8 @@ int main(int argc, char* argv[]) {
                     x++;
                     if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
-                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        int distance = sqrt(pow(x, 2) + pow(y, 2));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right, distance);
                         free(p);
                     }
                     print_map(world[INDEX(y)][INDEX(x)]->map);
@@ -133,7 +137,8 @@ int main(int argc, char* argv[]) {
                     x--;
                     if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
-                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        int distance = sqrt(pow(x, 2) + pow(y, 2));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right, distance);
                         free(p);
                     }
                     print_map(world[INDEX(y)][INDEX(x)]->map);
@@ -151,7 +156,8 @@ int main(int argc, char* argv[]) {
                     y = y_fly;
                     if (!world[INDEX(y)][INDEX(x)]) {
                         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
-                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right);
+                        int distance = sqrt(pow(x, 2) + pow(y, 2));
+                        world[INDEX(y)][INDEX(x)] = generate_map(p->top, p->bottom, p->left, p->right, distance);
                         free(p);
                     }
                     print_map(world[INDEX(y)][INDEX(x)]->map);

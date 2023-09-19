@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -ggdb -Wall -Werror
+CFLAGS = -ggdb -Wall -Werror -lm
 
 all: run
 

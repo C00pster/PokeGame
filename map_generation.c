@@ -65,7 +65,7 @@ char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length
     return map;
 }
 
-void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path) {
+void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance) {
     __int8_t vertical_path_col, horizontal_path_row, bottom_greater, left_greater;
     __int8_t pokimart_val, pokicenter_val, i, j;
 
@@ -175,33 +175,63 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
     }
 
     //Picks spot for pokimart and center
-    pokicenter_val = horizontal_path_row;
-    pokimart_val = vertical_path_col;
-    while (pokicenter_val - horizontal_path_row < 1 && pokicenter_val - horizontal_path_row > -3) {
-        pokicenter_val = 4 + rand() % (Y_WIDTH - 4 - 6 + 1);
-    }
-    while (abs(pokimart_val - vertical_path_col) < 2) {
-        pokimart_val = 4 + rand() % (X_WIDTH - 4 - 6 + 1);
-    }
+    int generation_chance = 0;
+    if (distance == 0) {
+        generation_chance = 100;
+    } else if (distance > 200) {
+        generation_chance = 5;
+    } else generation_chance = (((-45 * distance) / 200) + 50);
+    if (rand() % 100 < generation_chance) {
+        pokicenter_val = horizontal_path_row;
+        while (pokicenter_val - horizontal_path_row < 1 && pokicenter_val - horizontal_path_row > -3) {
+            pokicenter_val = 4 + rand() % (Y_WIDTH - 4 - 6 + 1);
+        }
+        i = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
 
-    i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
-    j = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
+        m->map[pokicenter_val][vertical_path_col + (1 * i)] = 'C';
+        m->map[pokicenter_val][vertical_path_col + (2 * i)] = 'C';
+        m->map[pokicenter_val + 1][vertical_path_col + (1 * i)] = 'C';
+        m->map[pokicenter_val + 1][vertical_path_col + (2 * i)] = 'C';
+    }
+    if (rand() % 100 < generation_chance) {
+        pokimart_val = vertical_path_col;
+        while (abs(pokimart_val - vertical_path_col) < 2) {
+            pokimart_val = 4 + rand() % (X_WIDTH - 4 - 6 + 1);
+        }
+        i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
 
-    m->map[horizontal_path_row + (1 * i)][pokimart_val] = 'M';
-    m->map[horizontal_path_row + (1 * i)][pokimart_val + 1] = 'M';
-    m->map[horizontal_path_row + (2 * i)][pokimart_val] = 'M';
-    m->map[horizontal_path_row + (2 * i)][pokimart_val + 1] = 'M';
+        m->map[horizontal_path_row + (1 * i)][pokimart_val] = 'M';
+        m->map[horizontal_path_row + (1 * i)][pokimart_val + 1] = 'M';
+        m->map[horizontal_path_row + (2 * i)][pokimart_val] = 'M';
+        m->map[horizontal_path_row + (2 * i)][pokimart_val + 1] = 'M';
+    }
+    // pokicenter_val = horizontal_path_row;
+    // pokimart_val = vertical_path_col;
+    // while (pokicenter_val - horizontal_path_row < 1 && pokicenter_val - horizontal_path_row > -3) {
+    //     pokicenter_val = 4 + rand() % (Y_WIDTH - 4 - 6 + 1);
+    // }
+    // while (abs(pokimart_val - vertical_path_col) < 2) {
+    //     pokimart_val = 4 + rand() % (X_WIDTH - 4 - 6 + 1);
+    // }
+
+    // i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
+    // j = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
+
+    // m->map[horizontal_path_row + (1 * i)][pokimart_val] = 'M';
+    // m->map[horizontal_path_row + (1 * i)][pokimart_val + 1] = 'M';
+    // m->map[horizontal_path_row + (2 * i)][pokimart_val] = 'M';
+    // m->map[horizontal_path_row + (2 * i)][pokimart_val + 1] = 'M';
     
 
-    m->map[pokicenter_val][vertical_path_col + (1 * j)] = 'C';
-    m->map[pokicenter_val][vertical_path_col + (2 * j)] = 'C';
-    m->map[pokicenter_val + 1][vertical_path_col + (1 * j)] = 'C';
-    m->map[pokicenter_val + 1][vertical_path_col + (2 * j)] = 'C';
+    // m->map[pokicenter_val][vertical_path_col + (1 * j)] = 'C';
+    // m->map[pokicenter_val][vertical_path_col + (2 * j)] = 'C';
+    // m->map[pokicenter_val + 1][vertical_path_col + (1 * j)] = 'C';
+    // m->map[pokicenter_val + 1][vertical_path_col + (2 * j)] = 'C';
 
     return;
 }
 
-Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path) {
+Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance) {
     char starter_char_vals[7] = {':','.','^',':','.','%',':'};
     __uint8_t start_char_arr_length = 7;
 
@@ -211,7 +241,11 @@ Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, _
         return NULL;
     }
     m->map = generate_regions(starter_char_vals, start_char_arr_length);
-    generate_path(m, top_path, bottom_path, left_path, right_path);
+    if (!m->map) {
+        printf("Error generating regions\n");
+        return NULL;
+    }
+    generate_path(m, top_path, bottom_path, left_path, right_path, distance);
 
     return m;
 }

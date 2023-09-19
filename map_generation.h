@@ -7,8 +7,9 @@
 typedef struct {
     char** map;
     __int8_t top_path, bottom_path, left_path, right_path;
+    int distance;
 } Map;
 
-Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path);
+Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance);
 
 #endif
