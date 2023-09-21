@@ -2,59 +2,66 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "queue.h"
+#include "data_structures/queue.h"
 #include "map_generation.h"
+#include "tile.h"
 
 #define ARR_MAX 800
 #define X_WIDTH 80
 #define Y_WIDTH 21
 
-char** generate_regions(char* starter_char_vals, __uint8_t start_char_arr_length) {
-    __int8_t i,j;
-    //TODO - creates memory leak
-    char** map = (char**)malloc(Y_WIDTH * sizeof(char*));
+Tile*** allocate_map() {
+    __int8_t i;
+    Tile*** map = (Tile***)malloc(Y_WIDTH * sizeof(Tile**));
     if (!map) {
         printf("Error allocating memory for map\n");
         return NULL;
     }
-    for (i = 0; i < Y_WIDTH; i++) {
-        map[i] = malloc (X_WIDTH * sizeof(char));
+    for (i =0; i < Y_WIDTH; i++) {
+        map[i] = malloc (X_WIDTH * sizeof(Tile*));
         if (!map[i]) {
             printf("Error allocating memory for map\n");
             return NULL;
         }
         memset(map[i], '\0', X_WIDTH);
     }
+
+    return map;
+}
+
+Tile*** generate_regions(TileType* starter_tile_types, __uint8_t start_tile_type_length) {
+    __int8_t i,j;
+    Tile*** map = allocate_map();
     Queue* q = create_queue(ARR_MAX);
 
     //Generates random starter points
-    for (i = 0; i < start_char_arr_length; i++) {
+    for (i = 0; i < start_tile_type_length; i++) {
         Point* new_point = generate_point(1, X_WIDTH-2, 1, Y_WIDTH-2);
-        map[new_point->y][new_point->x] = starter_char_vals[i];
+        map[new_point->y][new_point->x] = create_tile(starter_tile_types[i], new_point->x, new_point->y); //starter_char_vals[i];
         enqueue(q, new_point);
     }
 
     //Sets mountain border
     for (i = 0; i < X_WIDTH; i++) {
-        map[0][i] = '%';
-        map[Y_WIDTH-1][i] = '%';
+        map[0][i] = create_tile(MOUNTAIN, i, 0);
+        map[Y_WIDTH-1][i] = create_tile(MOUNTAIN, i, Y_WIDTH-1);
     }
     for (i = 1; i < Y_WIDTH - 1; i++) {
-        map[i][0] = '%';
-        map[i][X_WIDTH-1] = '%';
+        map[i][0] = create_tile(MOUNTAIN, 0, i);
+        map[i][X_WIDTH-1] = create_tile(MOUNTAIN, X_WIDTH-1, i);
     }
 
     //Fills map in from starter points
     while (q->size > 0) {
         Point* p = dequeue(q);
-        char c = map[p->y][p->x];
+        Tile* t = map[p->y][p->x];
 
         for (j = -1; j <= 1; j++) {
             for (i = -2; i <= 2; i++) {
                 Point* new_point = create_point(p->x + i, p->y + j);
                 if (new_point->y > 0 && new_point->y < Y_WIDTH-1 && new_point->x > 0 && new_point->x < X_WIDTH - 1) {
                     if (!map[new_point->y][new_point->x]) {
-                        map[new_point->y][new_point->x] = c;
+                        map[new_point->y][new_point->x] = create_tile(t->type, new_point->x, new_point->y);
                         enqueue(q, new_point);
                     }
                 }
@@ -115,49 +122,53 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
     }
 
     //Creates a 3 tile long path out from each entrance
-    for (i = 0; i < 3; i++) {
-        if (bottom_path != -1) m->map[i][bottom_path] = '#';
-        if (top_path != -1) m->map[Y_WIDTH - i - 1][top_path] = '#';
-        if (left_path != -1) m->map[left_path][i] = '#';
-        if (right_path != -1) m->map[right_path][X_WIDTH - i - 1] = '#';
+    if (bottom_path != -1) m->map[0][bottom_path] = create_tile(GATE, bottom_path, 0);
+    if (top_path != -1) m->map[Y_WIDTH - 1][top_path] = create_tile(GATE, top_path, Y_WIDTH - 1);
+    if (left_path != -1) m->map[left_path][0] = create_tile(GATE, 0, left_path);
+    if (right_path != -1) m->map[right_path][X_WIDTH - 1] = create_tile(GATE, X_WIDTH - 1, right_path);
+    for (i = 1; i < 3; i++) {
+        if (bottom_path != -1) m->map[i][bottom_path] = create_tile(PATH, bottom_path, i);
+        if (top_path != -1) m->map[Y_WIDTH - i - 1][top_path] = create_tile(PATH, top_path, Y_WIDTH - i - 1);
+        if (left_path != -1) m->map[left_path][i] = create_tile(PATH, i, left_path);
+        if (right_path != -1) m->map[right_path][X_WIDTH - i - 1] = create_tile(PATH, X_WIDTH - i - 1, right_path);
     }
 
     //Creates a path from the path entrance column or row to the vertical or horizontal cross
     if (left_greater == 1) {
         while (left_path != horizontal_path_row) {
-            m->map[left_path][3] = '#';
+            m->map[left_path][3] = create_tile(PATH, 3, left_path);
             left_path--;
         }
         while (right_path != horizontal_path_row) {
-            m->map[right_path][X_WIDTH-4] = '#';
+            m->map[right_path][X_WIDTH-4] = create_tile(PATH, X_WIDTH-4, right_path);
             right_path++;
         }
     } else if (left_greater == -1) {
         while (left_path != horizontal_path_row) {
-            m->map[left_path][3] = '#';
+            m->map[left_path][3] = create_tile(PATH, 3, left_path);
             left_path++;
         }
         while (right_path != horizontal_path_row) {
-            m->map[right_path][X_WIDTH-4] = '#';
+            m->map[right_path][X_WIDTH-4] = create_tile(PATH, X_WIDTH-4, right_path);
             right_path--;
         }
     }
     if (bottom_greater == 1) {
         while (bottom_path != vertical_path_col) {
-            m->map[3][bottom_path] = '#';
+            m->map[3][bottom_path] = create_tile(PATH, bottom_path, 3);
             bottom_path--;
         }
         while (top_path != vertical_path_col) {
-            m->map[Y_WIDTH-4][top_path] = '#';
+            m->map[Y_WIDTH-4][top_path] = create_tile(PATH, top_path, Y_WIDTH-4);
             top_path++;
         }
     } else if (bottom_greater == -1) {
         while (bottom_path != vertical_path_col) {
-            m->map[3][bottom_path] = '#';
+            m->map[3][bottom_path] = create_tile(PATH, bottom_path, 3);
             bottom_path++;
         }
         while (top_path != vertical_path_col) {
-            m->map[Y_WIDTH-4][top_path] = '#';
+            m->map[Y_WIDTH-4][top_path] = create_tile(PATH, top_path, Y_WIDTH-4);
             top_path--;
         }
     }
@@ -166,12 +177,12 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
     i = left_path == -1 ? vertical_path_col : 3; //If there is not a left path, start at the vertical path col
     j = right_path == -1 ? vertical_path_col : X_WIDTH - 3; //If there is not a right path, end at the vertical path col
     for (; i < j; i++) {
-        m->map[horizontal_path_row][i] = '#';
+        m->map[horizontal_path_row][i] = create_tile(PATH, i, horizontal_path_row);
     }
     i = bottom_path == -1 ? horizontal_path_row : 3; //If there is not a bottom path, start at the horizontal path row
     j = top_path == -1 ? horizontal_path_row : Y_WIDTH - 3; //If there is not a top path, end at the horizontal path row
     for (; i < j; i++) {
-        m->map[i][vertical_path_col] = '#';
+        m->map[i][vertical_path_col] = create_tile(PATH, vertical_path_col, i);
     }
 
     //Picks spot for pokimart and center
@@ -188,10 +199,10 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
         }
         i = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
 
-        m->map[pokicenter_val][vertical_path_col + (1 * i)] = 'C';
-        m->map[pokicenter_val][vertical_path_col + (2 * i)] = 'C';
-        m->map[pokicenter_val + 1][vertical_path_col + (1 * i)] = 'C';
-        m->map[pokicenter_val + 1][vertical_path_col + (2 * i)] = 'C';
+        m->map[pokicenter_val][vertical_path_col + (1 * i)] = create_tile(PCNTR, vertical_path_col + (1 * i), pokicenter_val);
+        m->map[pokicenter_val][vertical_path_col + (2 * i)] = create_tile(PCNTR, vertical_path_col + (2 * i), pokicenter_val);
+        m->map[pokicenter_val + 1][vertical_path_col + (1 * i)] = create_tile(PCNTR, vertical_path_col + (1 * i), pokicenter_val + 1);
+        m->map[pokicenter_val + 1][vertical_path_col + (2 * i)] = create_tile(PCNTR, vertical_path_col + (2 * i), pokicenter_val + 1);
     }
     if (rand() % 100 < generation_chance) {
         pokimart_val = vertical_path_col;
@@ -200,47 +211,25 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
         }
         i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
 
-        m->map[horizontal_path_row + (1 * i)][pokimart_val] = 'M';
-        m->map[horizontal_path_row + (1 * i)][pokimart_val + 1] = 'M';
-        m->map[horizontal_path_row + (2 * i)][pokimart_val] = 'M';
-        m->map[horizontal_path_row + (2 * i)][pokimart_val + 1] = 'M';
+        m->map[horizontal_path_row + (1 * i)][pokimart_val] = create_tile(PMART, pokimart_val, horizontal_path_row + (1 * i));
+        m->map[horizontal_path_row + (1 * i)][pokimart_val + 1] = create_tile(PMART, pokimart_val + 1, horizontal_path_row + (1 * i));
+        m->map[horizontal_path_row + (2 * i)][pokimart_val] = create_tile(PMART, pokimart_val, horizontal_path_row + (2 * i));
+        m->map[horizontal_path_row + (2 * i)][pokimart_val + 1] = create_tile(PMART, pokimart_val + 1, horizontal_path_row + (2 * i));
     }
-    // pokicenter_val = horizontal_path_row;
-    // pokimart_val = vertical_path_col;
-    // while (pokicenter_val - horizontal_path_row < 1 && pokicenter_val - horizontal_path_row > -3) {
-    //     pokicenter_val = 4 + rand() % (Y_WIDTH - 4 - 6 + 1);
-    // }
-    // while (abs(pokimart_val - vertical_path_col) < 2) {
-    //     pokimart_val = 4 + rand() % (X_WIDTH - 4 - 6 + 1);
-    // }
-
-    // i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
-    // j = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
-
-    // m->map[horizontal_path_row + (1 * i)][pokimart_val] = 'M';
-    // m->map[horizontal_path_row + (1 * i)][pokimart_val + 1] = 'M';
-    // m->map[horizontal_path_row + (2 * i)][pokimart_val] = 'M';
-    // m->map[horizontal_path_row + (2 * i)][pokimart_val + 1] = 'M';
-    
-
-    // m->map[pokicenter_val][vertical_path_col + (1 * j)] = 'C';
-    // m->map[pokicenter_val][vertical_path_col + (2 * j)] = 'C';
-    // m->map[pokicenter_val + 1][vertical_path_col + (1 * j)] = 'C';
-    // m->map[pokicenter_val + 1][vertical_path_col + (2 * j)] = 'C';
 
     return;
 }
 
 Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance) {
-    char starter_char_vals[7] = {':','.','^',':','.','%',':'};
-    __uint8_t start_char_arr_length = 7;
+    TileType starter_tile_types[7] = {TGRASS, SGRASS, FOREST, TGRASS, SGRASS, BOULDER, TGRASS};
+    __uint8_t start_tile_type_length = 7;
 
     Map* m = (Map*)malloc(sizeof(Map));
     if (!m) {
         printf("Error allocating memory for map\n");
         return NULL;
     }
-    m->map = generate_regions(starter_char_vals, start_char_arr_length);
+    m->map = generate_regions(starter_tile_types, start_tile_type_length);
     if (!m->map) {
         printf("Error generating regions\n");
         return NULL;

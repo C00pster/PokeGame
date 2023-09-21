@@ -1,4 +1,5 @@
 #include "map_generation.h"
+#include "tile.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -10,11 +11,11 @@
 #define OFFSET 200
 #define INDEX(i) ((i) + OFFSET)
 
-void print_map(char** map) {
+void print_map(Tile*** map) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            printf("%c", map[j][i]);
+            printf("%c", get_tile_char(map[j][i]->type));
         }
         printf("\n");
     }

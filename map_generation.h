@@ -1,11 +1,12 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include "tile.h"
 
 #ifndef MAP_GENERATION_H
 #define MAP_GENERATION_H
 
 typedef struct {
-    char** map;
+    Tile*** map;
     __int8_t top_path, bottom_path, left_path, right_path;
     int distance;
 } Map;
