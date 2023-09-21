@@ -2,7 +2,8 @@
 #define TRAINER_H
 
 typedef struct {
-    int bldr, tree, path, pmart, pcntr, tgrass, sgrass, mtn, forrest, water, gate;
+    int bldr, tree, path, pmart, pcntr, tgrass, sgrass, mtn, forest, water, gate;
+    int x, y;
 } Trainer;
 
 Trainer *create_pc();

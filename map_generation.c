@@ -5,10 +5,9 @@
 #include "data_structures/queue.h"
 #include "map_generation.h"
 #include "tile.h"
+#include "config.h"
 
 #define ARR_MAX 800
-#define X_WIDTH 80
-#define Y_WIDTH 21
 
 Tile*** allocate_map() {
     __int8_t i;
@@ -41,14 +40,14 @@ Tile*** generate_regions(TileType* starter_tile_types, __uint8_t start_tile_type
         enqueue(q, new_point);
     }
 
-    //Sets mountain border
+    //Sets boulder border
     for (i = 0; i < X_WIDTH; i++) {
-        map[0][i] = create_tile(MOUNTAIN, i, 0);
-        map[Y_WIDTH-1][i] = create_tile(MOUNTAIN, i, Y_WIDTH-1);
+        map[0][i] = create_tile(BOULDER, i, 0);
+        map[Y_WIDTH-1][i] = create_tile(BOULDER, i, Y_WIDTH-1);
     }
     for (i = 1; i < Y_WIDTH - 1; i++) {
-        map[i][0] = create_tile(MOUNTAIN, 0, i);
-        map[i][X_WIDTH-1] = create_tile(MOUNTAIN, X_WIDTH-1, i);
+        map[i][0] = create_tile(BOULDER, 0, i);
+        map[i][X_WIDTH-1] = create_tile(BOULDER, X_WIDTH-1, i);
     }
 
     //Fills map in from starter points
@@ -220,8 +219,8 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
     return;
 }
 
-Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance) {
-    TileType starter_tile_types[7] = {TGRASS, SGRASS, FOREST, TGRASS, SGRASS, BOULDER, TGRASS};
+Map* generate_terrain(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance) {
+    TileType starter_tile_types[7] = {TGRASS, SGRASS, FOREST, TGRASS, SGRASS, MOUNTAIN, TGRASS};
     __uint8_t start_tile_type_length = 7;
 
     Map* m = (Map*)malloc(sizeof(Map));
@@ -237,4 +236,68 @@ Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, _
     generate_path(m, top_path, bottom_path, left_path, right_path, distance);
 
     return m;
+}
+
+typedef struct {
+    __int8_t top, bottom, left, right;
+} Path_Tracker;
+
+Path_Tracker* get_paths(Map*** map, int x, int y) {
+    Path_Tracker* path_tracker = (Path_Tracker*)malloc(sizeof(Path_Tracker));
+
+    if (x + 1 < SIZE) {
+        if (map[y][x+1]) {
+            path_tracker->right = map[y][x+1]->left_path;
+        } else path_tracker->right = 0;
+    } else path_tracker->right = -1;
+    if (x - 1 > 0) {
+        if (map[y][x-1]) {
+            path_tracker->left = map[y][x-1]->right_path;
+        } else path_tracker->left = 0;
+    } else path_tracker->left = -1;
+    if (y + 1 < SIZE) {
+        if (map[y+1][x]) {
+            path_tracker->bottom = map[y+1][x]->top_path;
+        } else path_tracker->bottom = 0;
+    } else path_tracker->bottom = -1;
+    if (y - 1 > 0) {
+        if (map[y-1][x]) {
+            path_tracker->top = map[y-1][x]->bottom_path;
+        } else path_tracker->top = 0;
+    } else path_tracker->top = -1;
+
+    return path_tracker;
+}
+
+void generate_map(Map*** world, int x, int y) {
+    if (x != 0 || y != 0) {
+        Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
+        int distance = sqrt(pow(x, 2) + pow(y, 2));
+        world[INDEX(y)][INDEX(x)] = generate_terrain(p->top, p->bottom, p->left, p->right, distance);
+        free(p);
+    } else {
+        world[INDEX(y)][INDEX(x)] = generate_terrain(X_WIDTH/2, X_WIDTH/2, Y_WIDTH/2, Y_WIDTH/2, 0);
+    }
+}
+
+Map*** create_world() {
+    int i;
+    Map ***world = (Map***)malloc(sizeof(Map***) * SIZE); //Creates an array of pointers to maps
+    if (!world) {
+        printf("Error allocating memory for world\n");
+        return NULL;
+    }
+    for(i = 0; i < SIZE; i++) {
+        world[i] = (Map**)malloc(sizeof(Map*) * SIZE);
+        if (!world[i]) {
+            printf("Error allocating memory for world\n");
+            return NULL;
+        }
+        memset(world[i], '\0', sizeof(Map*) * SIZE);
+    }
+
+    int x = 0, y = 0;
+    generate_map(world, x, y);
+
+    return world;
 }

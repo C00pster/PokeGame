@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include "tile.h"
 
 #ifndef MAP_GENERATION_H
@@ -11,6 +12,9 @@ typedef struct {
     int distance;
 } Map;
 
-Map* generate_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance);
+void generate_map(Map*** world, int x, int y);
+void free_map(Map* map);
+
+Map*** create_world();
 
 #endif
