@@ -1,18 +1,23 @@
-#include "tile.h"
 #include <stdlib.h>
+#include "map/tile.h"
+#include "character.h"
 
-Tile* create_tile(TileType type, __int8_t x_coor, __int8_t y_coor) {
+Tile* create_tile(TileType type, __int8_t x, __int8_t y) {
     Tile* tile = (Tile*)malloc(sizeof(Tile));
     tile->type = type;
-    tile->x = x_coor;
-    tile->y = y_coor;
+    tile->x = x;
+    tile->y = y;
+    tile->trainer = NONE;
 
     return tile;
 }
 
-char get_tile_char(TileType type) {
+char get_tile_char(Tile* tile) {
+    if (tile->trainer != NONE) {
+        return '@';
+    }
     char result;
-    switch(type) {
+    switch(tile->type) {
         case BOULDER:
         case MOUNTAIN:
             result = '%';

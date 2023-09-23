@@ -1,9 +1,10 @@
-#include "map_generation.h"
-#include "tile.h"
-#include "config.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include "map/map_generation.h"
+#include "map/tile.h"
+#include "character.h"
+#include "config.h"
 
 void print_map(Map*** world, int x, int y) {
     x += OFFSET;
@@ -11,7 +12,7 @@ void print_map(Map*** world, int x, int y) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            printf("%c", get_tile_char(world[y][x]->map[j][i]->type));
+            printf("%c", get_tile_char(world[y][x]->map[j][i]));
         }
         printf("\n");
     }

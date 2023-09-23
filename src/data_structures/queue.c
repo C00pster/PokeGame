@@ -1,4 +1,4 @@
-#include "queue.h"
+#include "data_structures/queue.h"
 
 Queue* create_queue(__uint16_t c) {
     Queue* q = (Queue*) malloc(sizeof(Queue));

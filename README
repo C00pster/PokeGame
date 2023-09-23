@@ -1,7 +1,6 @@
-This project creates the terrain for an ASCII character based Pokemon game. It uses a queue data structure to generate points and build off of those points in a circle to generate the terrain. The roads and Pokecenter/Pokemarts are placed afterwards
+This project creates the terrain for an ASCII character based Pokemon game. It uses a queue data structure to generate points and build off of those points in a circle to generate the terrain. The roads and Pokecenter/Pokemarts are placed afterwards.
+
+Running the `make` will create the proper binaries in a bin folder as well as a "run" binary in the main project folder. The game can be started by typing `./run` in the terminal.
 
 BUGS:
-    There is a bug on printing the character 'q' where it exits, yet states invalid command. This is a known issue, but will be resolved
-    upon the implementation of the cursors library later in the semester.
-
     On borders, Pokimarts and Pokicenters sometimes generate off of the path

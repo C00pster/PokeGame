@@ -8,7 +8,7 @@
 
 typedef struct {
     Tile*** map;
-    __int8_t top_path, bottom_path, left_path, right_path;
+    __int8_t top_path, bottom_path, left_path, right_path, horizontal_path_row, vertical_path_col;
     int distance;
 } Map;
 

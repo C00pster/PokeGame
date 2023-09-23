@@ -1,3 +1,8 @@
+9/22/2023 7:30p
+    Added proper project folder structures
+    Automated Makefile
+    Updated README
+
 9/21/2023 5:30p
     Further modularized main.c
     Added config.h

@@ -3,8 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include "data_structures/queue.h"
-#include "map_generation.h"
-#include "tile.h"
+#include "map/map_generation.h"
+#include "map/tile.h"
 #include "config.h"
 
 #define ARR_MAX 800
@@ -119,6 +119,8 @@ void generate_path(Map* m, __int8_t top_path, __int8_t bottom_path, __int8_t lef
         vertical_path_col = top_path + rand() % (bottom_path - top_path + 1);
         bottom_greater = 1;
     }
+    m->horizontal_path_row = horizontal_path_row;
+    m->vertical_path_col = vertical_path_col;
 
     //Creates a 3 tile long path out from each entrance
     if (bottom_path != -1) m->map[0][bottom_path] = create_tile(GATE, bottom_path, 0);
@@ -269,6 +271,21 @@ Path_Tracker* get_paths(Map*** map, int x, int y) {
     return path_tracker;
 }
 
+void add_trainers(Map*** world, int x, int y) {
+    Map* m = world[INDEX(y)][INDEX(x)];
+    int horizontal_path_row = m->horizontal_path_row;
+    int vertical_path_col = m->vertical_path_col;
+
+    if (rand() % 2 == 1) {
+        m->map[horizontal_path_row][rand() % (X_WIDTH - 6) + 3]->trainer = PC;
+    } else {
+        m->map[rand() % (Y_WIDTH - 6) + 3][vertical_path_col]->trainer = PC;
+    }
+}
+
+/*
+Creates a map if it doesn't exist. Adds trainers to created map
+*/
 void generate_map(Map*** world, int x, int y) {
     if (x != 0 || y != 0) {
         Path_Tracker* p = get_paths(world, INDEX(x), INDEX(y));
@@ -278,6 +295,7 @@ void generate_map(Map*** world, int x, int y) {
     } else {
         world[INDEX(y)][INDEX(x)] = generate_terrain(X_WIDTH/2, X_WIDTH/2, Y_WIDTH/2, Y_WIDTH/2, 0);
     }
+    add_trainers(world, x, y);
 }
 
 Map*** create_world() {
