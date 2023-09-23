@@ -38,4 +38,4 @@ tgz: clean
 	tar cvzf Assignment1_Cooper-McKee.tgz --exclude=.vscode --exclude=.gitignore *
 	
 clean:
-	rm -f $(BINDIR) *.tgz run
+	rm -rf $(BINDIR) *.tgz run
