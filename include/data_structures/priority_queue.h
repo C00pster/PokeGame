@@ -1,16 +1,19 @@
 #ifndef PRIORITY_QUEUE_H
 #define PRIORITY_QUEUE_H
 
-#define MAX_SIZE 1680
+#include <stdbool.h>
 
 typedef struct {
-    int data[MAX_SIZE];
+    void** array;
+    int capacity;
     int size;
+    int (*compare)(void*, void*); //Comparison function
 } PriorityQueue;
 
-void swap(int *a, int *b);
-PriorityQueue* create_priority_queue();
-void push(PriorityQueue *pq, int data);
-int pop(PriorityQueue *pq);
+PriorityQueue* create_priority_queue(int capacity, int (*compare)(void*, void*));
+bool is_empty(PriorityQueue* pq);
+void push(PriorityQueue* pq, void* item);
+void* pop(PriorityQueue* pq);
+void free_priority_queue(PriorityQueue* pq);
 
 #endif // PRIORITY_QUEUE_H

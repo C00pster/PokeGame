@@ -1,24 +1,23 @@
 #ifndef TRAINER_H
 #define TRAINER_H
 
-typedef struct {
-    int bldr, tree, path, pmart, pcntr, tgrass, sgrass, mtn, forest, water, gate;
-    int x, y;
-} Trainer;
-
 typedef enum {
-    NONE,
     PC,
     HIKER,
     RIVAL,
     SWIMMER,
-    OTHER
+    OTHER,
+    NUM_TRAINERS
 } TrainerType;
 
-Trainer* create_pc();
-Trainer* create_hiker();
-Trainer* create_rival();
-Trainer* create_swimmer();
-Trainer* create_other();
+typedef struct {
+    int* weights;
+    int x, y;
+    TrainerType type;
+} Trainer;
+
+Trainer* create_trainer(TrainerType type, int x, int y);
+int* get_trainer_weights(TrainerType type);
+void free_trainer(Trainer* trainer);
 
 #endif // TRAINER_H

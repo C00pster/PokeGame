@@ -6,16 +6,30 @@
 #include "character.h"
 #include "config.h"
 
-void print_map(Map*** world, int x, int y) {
-    x += OFFSET;
-    y += OFFSET;
+void print_distance_map(int** map) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            printf("%c", get_tile_char(world[y][x]->map[j][i]));
+            printf("%02d ", map[j][i] % 100);
         }
         printf("\n");
     }
+}
+
+void print_map(Map* map) {
+    int i, j;
+    for (j = 0; j < Y_WIDTH; j++) {
+        for (i = 0; i < X_WIDTH; i++) {
+            printf("%c", get_tile_char(map->map[j][i]));
+        }
+        printf("\n");
+    }
+
+    printf("\nHiker\n");
+    print_distance_map(map->hiker_distance_map);
+    
+    printf("\nRival\n");
+    print_distance_map(map->rival_distance_map);
 }
 
 int main(int argc, char* argv[]) {
@@ -30,7 +44,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    print_map(world, x, y); //Prints the map
+    print_map(world[INDEX(y)][INDEX(x)]); //Prints the map
 
     do {
         printf("You are at (%d,%d)\tEnter a command: ", x, y);
@@ -45,7 +59,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     y++;
                     if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world, x, y);
+                    print_map(world[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 's':
@@ -55,7 +69,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     y--;
                     if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world, x, y);
+                    print_map(world[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'e':
@@ -65,7 +79,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     x++;
                     if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world, x, y);
+                    print_map(world[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'w':
@@ -74,10 +88,8 @@ int main(int argc, char* argv[]) {
                     break;
                 } else {
                     x--;
-                    if (!world[INDEX(y)][INDEX(x)]) {
-                        generate_map(world, x, y);
-                    }
-                    print_map(world, x, y);
+                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'f':
@@ -89,10 +101,8 @@ int main(int argc, char* argv[]) {
                 } else {
                     x = x_fly;
                     y = y_fly;
-                    if (!world[INDEX(y)][INDEX(x)]) {
-                        generate_map(world, x, y);
-                    }
-                    print_map(world, x, y);
+                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'q':

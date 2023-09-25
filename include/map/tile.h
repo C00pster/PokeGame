@@ -15,7 +15,8 @@ typedef enum {
     MOUNTAIN,
     FOREST,
     WATER,
-    GATE
+    GATE,
+    NUM_TILES
 } TileType;
 
 typedef struct {
@@ -26,5 +27,6 @@ typedef struct {
 
 Tile* create_tile(TileType type, __int8_t x, __int8_t y);
 char get_tile_char(Tile* tile);
+int get_tile_weight(Tile* tile, TrainerType trainer);
 
 #endif // TILE_H

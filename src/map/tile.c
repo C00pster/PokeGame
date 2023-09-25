@@ -1,4 +1,5 @@
 #include <stdlib.h>
+
 #include "map/tile.h"
 #include "character.h"
 
@@ -7,13 +8,13 @@ Tile* create_tile(TileType type, __int8_t x, __int8_t y) {
     tile->type = type;
     tile->x = x;
     tile->y = y;
-    tile->trainer = NONE;
+    tile->trainer = NUM_TRAINERS;
 
     return tile;
 }
 
 char get_tile_char(Tile* tile) {
-    if (tile->trainer != NONE) {
+    if (tile->trainer != NUM_TRAINERS) {
         return '@';
     }
     char result;
@@ -45,6 +46,8 @@ char get_tile_char(Tile* tile) {
         case WATER:
             result = '~';
             break;
+        case NUM_TILES:
+            exit(1);
     }
     return result;
 }

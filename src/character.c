@@ -1,98 +1,132 @@
-#include "character.h"
 #include <limits.h>
 #include <stdlib.h>
 
-Trainer* create_pc(int x, int y) {
-    Trainer* pc = (Trainer*)malloc(sizeof(Trainer));
-    pc->x = x;
-    pc->y = y;
-    pc->bldr = INT_MAX;
-    pc->tree = INT_MAX;
-    pc->path = 10;
-    pc->pmart = 10;
-    pc->pcntr = 10;
-    pc->tgrass = 20;
-    pc->sgrass = 10;
-    pc->mtn = INT_MAX;
-    pc->forest = INT_MAX;
-    pc->water = INT_MAX;
-    pc->gate = 10;
+#include "character.h"
+#include "map/tile.h"
 
-    return pc;
+int* get_pc_weights() {
+    int* weights = malloc(sizeof(int) * NUM_TILES);
+    weights[BOULDER] = INT_MAX;
+    weights[TREE] = INT_MAX;
+    weights[PATH] = 10;
+    weights[PMART] = 10;
+    weights[PCNTR] = 10;
+    weights[TGRASS] = 20;
+    weights[SGRASS] = 10;
+    weights[MOUNTAIN] = INT_MAX;
+    weights[FOREST] = INT_MAX;
+    weights[WATER] = INT_MAX;
+    weights[GATE] = 10;
+
+    return weights;
 }
 
-Trainer* create_hiker(int x, int y){
-    Trainer* hiker = (Trainer*)malloc(sizeof(Trainer));
-    hiker->x = x;
-    hiker->y = y;
-    hiker->bldr = INT_MAX;
-    hiker->tree = INT_MAX;
-    hiker->path = 10;
-    hiker->pmart = 50;
-    hiker->pcntr = 50;
-    hiker->tgrass = 15;
-    hiker->sgrass = 10;
-    hiker->mtn = 15;
-    hiker->forest = 15;
-    hiker->water = INT_MAX;
-    hiker->gate = INT_MAX;
+int* get_hiker_weights() {
+    int* weights = malloc(sizeof(int) * NUM_TILES);
+    weights[BOULDER] = INT_MAX;
+    weights[TREE] = INT_MAX;
+    weights[PATH] = 10;
+    weights[PMART] = 50;
+    weights[PCNTR] = 50;
+    weights[TGRASS] = 15;
+    weights[SGRASS] = 10;
+    weights[MOUNTAIN] = 15;
+    weights[FOREST] = 15;
+    weights[WATER] = INT_MAX;
+    weights[GATE] = INT_MAX;
 
-    return hiker;
+    return weights;
 }
 
-Trainer* create_rival(int x, int y){
-    Trainer* rival = (Trainer*)malloc(sizeof(Trainer));
-    rival->x = x;
-    rival->y = y;
-    rival->bldr = INT_MAX;
-    rival->tree = INT_MAX;
-    rival->path = 10;
-    rival->pmart = 50;
-    rival->pcntr = 50;
-    rival->tgrass = 20;
-    rival->sgrass = 10;
-    rival->mtn = INT_MAX;
-    rival->forest = INT_MAX;
-    rival->water = INT_MAX;
-    rival->gate = INT_MAX;
+int* get_rival_weights() {
+    int* weights = malloc(sizeof(int) * NUM_TILES);
+    weights[BOULDER] = INT_MAX;
+    weights[TREE] = INT_MAX;
+    weights[PATH] = 10;
+    weights[PMART] = 50;
+    weights[PCNTR] = 50;
+    weights[TGRASS] = 20;
+    weights[SGRASS] = 10;
+    weights[MOUNTAIN] = INT_MAX;
+    weights[FOREST] = INT_MAX;
+    weights[WATER] = INT_MAX;
+    weights[GATE] = INT_MAX;
 
-    return rival;
+    return weights;
 }
 
-Trainer* create_swimmer(int x, int y){
-    Trainer* swimmer = (Trainer*)malloc(sizeof(Trainer));
-    swimmer->x = x;
-    swimmer->y = y;
-    swimmer->bldr = INT_MAX;
-    swimmer->tree = INT_MAX;
-    swimmer->path = INT_MAX;
-    swimmer->pmart = INT_MAX;
-    swimmer->pcntr = INT_MAX;
-    swimmer->tgrass = INT_MAX;
-    swimmer->sgrass = INT_MAX;
-    swimmer->mtn = INT_MAX;
-    swimmer->forest = INT_MAX;
-    swimmer->water = 7;
-    swimmer->gate = INT_MAX;
+int* get_swimmer_weights() {
+    int* weights = malloc(sizeof(int) * NUM_TILES);
+    weights[BOULDER] = INT_MAX;
+    weights[TREE] = INT_MAX;
+    weights[PATH] = INT_MAX;
+    weights[PMART] = INT_MAX;
+    weights[PCNTR] = INT_MAX;
+    weights[TGRASS] = INT_MAX;
+    weights[SGRASS] = INT_MAX;
+    weights[MOUNTAIN] = INT_MAX;
+    weights[FOREST] = INT_MAX;
+    weights[WATER] = 7;
+    weights[GATE] = INT_MAX;
 
-    return swimmer;
+    return weights;
 }
 
-Trainer* create_other(int x, int y){
-    Trainer* other = (Trainer*)malloc(sizeof(Trainer));
-    other->x = x;
-    other->y = y;
-    other->bldr = INT_MAX;
-    other->tree = INT_MAX;
-    other->path = 10;
-    other->pmart = 50;
-    other->pcntr = 50;
-    other->tgrass = 20;
-    other->sgrass = 10;
-    other->mtn = INT_MAX;
-    other->forest = INT_MAX;
-    other->water = INT_MAX;
-    other->gate = INT_MAX;
+int* get_other_weights() {
+    int* weights = malloc(sizeof(int) * NUM_TILES);
+    weights[BOULDER] = INT_MAX;
+    weights[TREE] = INT_MAX;
+    weights[PATH] = 10;
+    weights[PMART] = 50;
+    weights[PCNTR] = 50;
+    weights[TGRASS] = 20;
+    weights[SGRASS] = 10;
+    weights[MOUNTAIN] = INT_MAX;
+    weights[FOREST] = INT_MAX;
+    weights[WATER] = INT_MAX;
+    weights[GATE] = INT_MAX;
 
-    return other;
+    return weights;
+}
+
+Trainer* create_trainer(TrainerType type, int x, int y) {
+    Trainer* trainer = (Trainer*)malloc(sizeof(Trainer));
+    trainer->type = type;
+    trainer->x = x;
+    trainer->y = y;
+
+    trainer->weights = get_trainer_weights(type);
+
+    return trainer;
+}
+
+int* get_trainer_weights(TrainerType type) {
+    int* result;
+    switch (type) {
+        case PC:
+            result = get_pc_weights();
+            break;
+        case HIKER:
+            result = get_hiker_weights();
+            break;
+        case RIVAL:
+            result = get_rival_weights();
+            break;
+        case SWIMMER:
+            result = get_swimmer_weights();
+            break;
+        case OTHER:
+            result = get_other_weights();
+            break;
+        case NUM_TRAINERS:
+            result = NULL;
+            break;
+    }
+
+    return result;
+}
+
+void free_trainer(Trainer* trainer) {
+    free(trainer->weights);
+    free(trainer);
 }

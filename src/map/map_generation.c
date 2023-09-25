@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+
 #include "data_structures/queue.h"
 #include "map/map_generation.h"
 #include "map/tile.h"
+#include "dijkstra.h"
 #include "config.h"
 
 #define ARR_MAX 800
@@ -271,16 +273,25 @@ Path_Tracker* get_paths(Map*** map, int x, int y) {
     return path_tracker;
 }
 
-void add_trainers(Map*** world, int x, int y) {
+Point* add_pc(Map*** world, int x, int y) {
     Map* m = world[INDEX(y)][INDEX(x)];
-    int horizontal_path_row = m->horizontal_path_row;
-    int vertical_path_col = m->vertical_path_col;
+    int x_coor, y_coor;
 
     if (rand() % 2 == 1) {
-        m->map[horizontal_path_row][rand() % (X_WIDTH - 6) + 3]->trainer = PC;
+        m->map[m->horizontal_path_row][rand() % (X_WIDTH - 6) + 3]->trainer = PC;
+        y_coor = m->horizontal_path_row;
+        x_coor = rand() % (X_WIDTH - 6) + 3;
     } else {
-        m->map[rand() % (Y_WIDTH - 6) + 3][vertical_path_col]->trainer = PC;
+        m->map[rand() % (Y_WIDTH - 6) + 3][m->vertical_path_col]->trainer = PC;
+        y_coor = rand() % (Y_WIDTH - 6) + 3;
+        x_coor = m->vertical_path_col;
     }
+
+    m->map[y_coor][x_coor]->trainer = PC;
+
+    Point* p = create_point(x_coor, y_coor);
+
+    return p;
 }
 
 /*
@@ -295,7 +306,10 @@ void generate_map(Map*** world, int x, int y) {
     } else {
         world[INDEX(y)][INDEX(x)] = generate_terrain(X_WIDTH/2, X_WIDTH/2, Y_WIDTH/2, Y_WIDTH/2, 0);
     }
-    add_trainers(world, x, y);
+    Point* p = add_pc(world, x, y);
+
+    world[INDEX(y)][INDEX(x)]->rival_distance_map = generate_distance_map(world[INDEX(y)][INDEX(x)], p->x, p->y, RIVAL);
+    world[INDEX(y)][INDEX(x)]->hiker_distance_map = generate_distance_map(world[INDEX(y)][INDEX(x)], p->x, p->y, HIKER);
 }
 
 Map*** create_world() {
