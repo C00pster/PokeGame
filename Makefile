@@ -1,11 +1,12 @@
 CC = gcc
-CFLAGS = -ggdb -Wall -Werror -lm -Iinclude
+CFLAGS = -ggdb -Wall -Werror -lm -Iinclude -MMD -MP
 SRCDIR = src
 BINDIR = bin
 TARGET = run
 SUBDIRS = . data_structures map
 SOURCES = $(foreach dir, $(SUBDIRS), $(wildcard $(SRCDIR)/$(dir)/*.c))
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%.o)
+HEADERS = $(SOURCES:$(SRCDIR)/%.c=$(SRCDIR)/%.h)
 
 
 all: $(TARGET)
@@ -22,3 +23,5 @@ tgz: clean
 	
 clean:
 	rm -rf $(BINDIR) *.tgz run
+
+-include $(DEPS)

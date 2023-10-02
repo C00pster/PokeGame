@@ -10,8 +10,8 @@ typedef struct {
     Tile*** map;
     __int8_t top_path, bottom_path, left_path, right_path, horizontal_path_row, vertical_path_col;
     int distance;
-    int** rival_distance_map;
-    int** hiker_distance_map;
+    unsigned int** rival_distance_map;
+    unsigned int** hiker_distance_map;
 } Map;
 
 void generate_map(Map*** world, int x, int y);

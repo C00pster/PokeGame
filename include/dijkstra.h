@@ -7,12 +7,13 @@
 #include "limits.h"
 
 typedef struct {
-    int row;
-    int col;
-    int distance;
+    unsigned int row;
+    unsigned int col;
+    unsigned int distance;
+    unsigned int last_weight;
 } Node;
 
-Node* create_node(int row, int col, int distance);
-int** generate_distance_map(Map* map, int x, int y, TrainerType type);
+Node* create_node(int row, int col, unsigned int distance, unsigned int last_weight);
+unsigned int** generate_distance_map(Map* map, int x, int y, TrainerType type);
 
 #endif // DIJKSTRA_H

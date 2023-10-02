@@ -9,7 +9,7 @@ Prompt = "Implement a priority queue in C"
 I then modified this implementation to fit my use case, specifically with the abstraction of data types
 */
 
-void swap_pointers(void** a, int** b) {
+void swap_pointers(void** a, void** b) {
     void* temp = *a;
     *a = *b;
     *b = temp;
@@ -17,7 +17,15 @@ void swap_pointers(void** a, int** b) {
 
 PriorityQueue* create_priority_queue(int capacity, int (*compare)(void*, void*)) {
     PriorityQueue* priority_queue = (PriorityQueue*) malloc(sizeof(PriorityQueue));
+    if (!priority_queue) {
+        printf("Failed to allocate priority queue");
+        return NULL;
+    }
     priority_queue->array = (void**) malloc(sizeof(void*) * capacity);
+    if (!priority_queue->array) {
+        printf("Failed to allocate priority queue array");
+        return NULL;
+    }
     priority_queue->size = 0;
     priority_queue->capacity = capacity;
     priority_queue->compare = compare;
@@ -32,13 +40,17 @@ void push(PriorityQueue* pq, void* item) {
     if (pq->size >= pq->capacity) {
         pq->capacity *= 2;
         pq->array = realloc(pq->array, sizeof(void*) * pq->capacity);
+        if (!pq->array) {
+            printf("Failed to resize priority queue");
+            return;
+        }
     }
 
     pq->array[pq->size++] = item;
 
-    int current_index = pq->size;
+    int current_index = pq->size - 1;
     //Bubble up
-    while (current_index > 0 && pq->array[current_index] > pq->array[(current_index-1)/2]) {
+    while (current_index > 0 && pq->compare(pq->array[current_index],pq->array[(current_index-1)/2]) > 0) {
         swap_pointers(pq->array[current_index], pq->array[(current_index-1)/2]);
         current_index = (current_index-1)/2;
     }
@@ -56,10 +68,10 @@ void* pop(PriorityQueue* pq) {
         if (current * 2 + 2 == pq->size) {
             child = current * 2 + 1;
         } else {
-            child = pq->array[current * 2 + 1] > pq->array[current * 2 + 2] ? current * 2 + 1 : current * 2 + 2;
+            child = pq->compare(pq->array[current * 2 + 1], pq->array[current * 2 + 2]) < 0 ? current * 2 + 1 : current * 2 + 2;
         }
 
-        if (pq->array[current] >= pq->array[child]) {
+        if (pq->compare(pq->array[current],pq->array[child]) <= 0) {
             break;
         }
 

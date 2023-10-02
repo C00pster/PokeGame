@@ -17,7 +17,7 @@ typedef struct {
 } Trainer;
 
 Trainer* create_trainer(TrainerType type, int x, int y);
-int* get_trainer_weights(TrainerType type);
+int* get_trainer_weights(TrainerType type, int* result);
 void free_trainer(Trainer* trainer);
 
 #endif // TRAINER_H

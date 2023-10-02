@@ -6,11 +6,11 @@
 #include "character.h"
 #include "config.h"
 
-void print_distance_map(int** map) {
+void print_distance_map(unsigned int** map) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            printf("%02d ", map[j][i] % 100);
+            printf("%.2d ", (map[j][i] % 100));
         }
         printf("\n");
     }

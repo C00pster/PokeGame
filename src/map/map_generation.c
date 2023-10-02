@@ -24,7 +24,7 @@ Tile*** allocate_map() {
             printf("Error allocating memory for map\n");
             return NULL;
         }
-        memset(map[i], '\0', X_WIDTH);
+        memset(map[i], '\0', X_WIDTH * sizeof(Tile*));
     }
 
     return map;
@@ -278,11 +278,9 @@ Point* add_pc(Map*** world, int x, int y) {
     int x_coor, y_coor;
 
     if (rand() % 2 == 1) {
-        m->map[m->horizontal_path_row][rand() % (X_WIDTH - 6) + 3]->trainer = PC;
         y_coor = m->horizontal_path_row;
         x_coor = rand() % (X_WIDTH - 6) + 3;
     } else {
-        m->map[rand() % (Y_WIDTH - 6) + 3][m->vertical_path_col]->trainer = PC;
         y_coor = rand() % (Y_WIDTH - 6) + 3;
         x_coor = m->vertical_path_col;
     }

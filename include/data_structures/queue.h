@@ -5,7 +5,7 @@
 #define QUEUE_H
 
 typedef struct {
-    __uint8_t x, y;
+    int x, y;
 } Point;
 
 typedef struct {

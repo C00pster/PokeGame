@@ -4,8 +4,7 @@
 #include "character.h"
 #include "map/tile.h"
 
-int* get_pc_weights() {
-    int* weights = malloc(sizeof(int) * NUM_TILES);
+int* get_pc_weights(int* weights) {
     weights[BOULDER] = INT_MAX;
     weights[TREE] = INT_MAX;
     weights[PATH] = 10;
@@ -21,8 +20,7 @@ int* get_pc_weights() {
     return weights;
 }
 
-int* get_hiker_weights() {
-    int* weights = malloc(sizeof(int) * NUM_TILES);
+int* get_hiker_weights(int* weights) {
     weights[BOULDER] = INT_MAX;
     weights[TREE] = INT_MAX;
     weights[PATH] = 10;
@@ -38,8 +36,7 @@ int* get_hiker_weights() {
     return weights;
 }
 
-int* get_rival_weights() {
-    int* weights = malloc(sizeof(int) * NUM_TILES);
+int* get_rival_weights(int* weights) {
     weights[BOULDER] = INT_MAX;
     weights[TREE] = INT_MAX;
     weights[PATH] = 10;
@@ -55,8 +52,7 @@ int* get_rival_weights() {
     return weights;
 }
 
-int* get_swimmer_weights() {
-    int* weights = malloc(sizeof(int) * NUM_TILES);
+int* get_swimmer_weights(int* weights) {
     weights[BOULDER] = INT_MAX;
     weights[TREE] = INT_MAX;
     weights[PATH] = INT_MAX;
@@ -72,8 +68,7 @@ int* get_swimmer_weights() {
     return weights;
 }
 
-int* get_other_weights() {
-    int* weights = malloc(sizeof(int) * NUM_TILES);
+int* get_other_weights(int* weights) {
     weights[BOULDER] = INT_MAX;
     weights[TREE] = INT_MAX;
     weights[PATH] = 10;
@@ -95,28 +90,28 @@ Trainer* create_trainer(TrainerType type, int x, int y) {
     trainer->x = x;
     trainer->y = y;
 
-    trainer->weights = get_trainer_weights(type);
+    int* weights = malloc(sizeof(int) * NUM_TILES);
+    trainer->weights = get_trainer_weights(type, weights);
 
     return trainer;
 }
 
-int* get_trainer_weights(TrainerType type) {
-    int* result;
+int* get_trainer_weights(TrainerType type, int* result) {
     switch (type) {
         case PC:
-            result = get_pc_weights();
+            get_pc_weights(result);
             break;
         case HIKER:
-            result = get_hiker_weights();
+            get_hiker_weights(result);
             break;
         case RIVAL:
-            result = get_rival_weights();
+            get_rival_weights(result);
             break;
         case SWIMMER:
-            result = get_swimmer_weights();
+            get_swimmer_weights(result);
             break;
         case OTHER:
-            result = get_other_weights();
+            get_other_weights(result);
             break;
         case NUM_TRAINERS:
             result = NULL;
