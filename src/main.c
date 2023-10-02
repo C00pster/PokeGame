@@ -1,38 +1,33 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <ncurses.h>
+
 #include "map/map_generation.h"
 #include "map/tile.h"
 #include "character.h"
 #include "config.h"
 
-void print_distance_map(unsigned int** map) {
-    int i, j;
-    for (j = 0; j < Y_WIDTH; j++) {
-        for (i = 0; i < X_WIDTH; i++) {
-            printf("%.2d ", (map[j][i] % 100));
-        }
-        printf("\n");
-    }
-}
-
 void print_map(Map* map) {
     int i, j;
+
+    move(0,0);
+
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            printf("%c", get_tile_char(map->map[j][i]));
+            printw("%c", get_tile_char(map->map[j][i]));
         }
-        printf("\n");
+        printw("\n");
     }
-
-    printf("\nHiker\n");
-    print_distance_map(map->hiker_distance_map);
-    
-    printf("\nRival\n");
-    print_distance_map(map->rival_distance_map);
+    refresh();
 }
 
 int main(int argc, char* argv[]) {
+    initscr();
+    raw();
+    noecho();
+    keypad(stdscr, TRUE);
+
     srand(time(NULL));
     int x = 0, y = 0;
     int i, j, k;
@@ -40,16 +35,17 @@ int main(int argc, char* argv[]) {
 
     Map ***world = create_world();
     if (!world) {
-        printf("Error allocating memory for world\n");
+        printw("Error allocating memory for world\n");
+        refresh();
+        endwin();
         return 1;
     }
     
     print_map(world[INDEX(y)][INDEX(x)]); //Prints the map
 
     do {
-        printf("You are at (%d,%d)\tEnter a command: ", x, y);
-        input = getc(stdin);
-        printf("\n");
+        printw("You are at (%d,%d)\tEnter a command: ", x, y);
+        input = getch();
 
         switch (input) {
             case 'n':
@@ -110,8 +106,8 @@ int main(int argc, char* argv[]) {
             default:
                 printf("Invalid command\n");
                 break;
+            clear();
         }
-        while (getc(stdin) != '\n'); //Clears stdin
     } while (input != 'q');
 
     //Memory cleanup
@@ -128,5 +124,6 @@ int main(int argc, char* argv[]) {
     }
     free(world);
 
+    endwin();
     return 0;
 }
