@@ -3,21 +3,20 @@
 #include <math.h>
 #include "tile.h"
 
-#ifndef MAP_GENERATION_H
-#define MAP_GENERATION_H
+#ifndef GAME_MAP_H
+#define GAME_MAP_H
 
 typedef struct {
-    Tile*** map;
+    Tile*** tiles;
     __int8_t top_path, bottom_path, left_path, right_path, horizontal_path_row, vertical_path_col;
     int distance;
     unsigned int** rival_distance_map;
     unsigned int** hiker_distance_map;
-} Map;
+} GameMap;
 
-void generate_map(Map*** world, int x, int y);
-void free_map(Map* map);
+typedef struct World World;
 
-Map*** create_world();
-void free_world(Map*** world);
+void generate_map(World *world, int x, int y);
+void free_map(GameMap* game_map);
 
 #endif

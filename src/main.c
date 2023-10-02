@@ -3,19 +3,20 @@
 #include <string.h>
 #include <ncurses.h>
 
-#include "map/map_generation.h"
+#include "map/game_map.h"
 #include "map/tile.h"
+#include "map/world.h"
 #include "character.h"
 #include "config.h"
 
-void print_map(Map* map) {
+void print_map(GameMap* game_map) {
     int i, j;
 
-    move(0,0);
+    clear();
 
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            printw("%c", get_tile_char(map->map[j][i]));
+            printw("%c", get_tile_char(game_map->tiles[j][i]));
         }
         printw("\n");
     }
@@ -23,17 +24,28 @@ void print_map(Map* map) {
 }
 
 int main(int argc, char* argv[]) {
-    initscr();
-    raw();
-    noecho();
-    keypad(stdscr, TRUE);
-
     srand(time(NULL));
     int x = 0, y = 0;
-    int i, j, k;
+    int i;
     char input;
+    int num_trianers = 10;
 
-    Map ***world = create_world();
+    for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--num-trainers") == 0) {
+            if (i+1 >= argc) {
+                printf("Error: --num-trainers requires an argument\n");
+                return 1;
+            } else {
+                num_trianers = atoi(argv[i+1]);
+                if (num_trianers < 0) {
+                    printf("Error: --num-trainers requires a positive integer argument\n");
+                    return 1;
+                }
+            }
+        }
+    }
+
+    World* world = create_world();
     if (!world) {
         printw("Error allocating memory for world\n");
         refresh();
@@ -41,51 +53,63 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    print_map(world[INDEX(y)][INDEX(x)]); //Prints the map
+    initscr();
+    raw();
+    noecho();
+    keypad(stdscr, TRUE);
+    print_map(world->maps[INDEX(y)][INDEX(x)]); //Prints the map
 
     do {
-        printw("You are at (%d,%d)\tEnter a command: ", x, y);
+        printw("You are at (%d,%d)", x, y);
         input = getch();
 
         switch (input) {
             case 'n':
                 if (INDEX(y+1) >= SIZE) {
-                    printf("You can't go that way\n");
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
+                    printw("You can't go that way\n");
+                    refresh();
                     break;
                 } else {
                     y++;
-                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world[INDEX(y)][INDEX(x)]);
+                    if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 's':
                 if (INDEX(y-1) < 0) {
-                    printf("You can't go that way\n");
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
+                    printw("You can't go that way\n");
+                    refresh();
                     break;
                 } else {
                     y--;
-                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world[INDEX(y)][INDEX(x)]);
+                    if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'e':
                 if (INDEX(x+1) >= SIZE) {
-                    printf("You can't go that way\n");
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
+                    printw("You can't go that way\n");
+                    refresh();
                     break;
                 } else {
                     x++;
-                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world[INDEX(y)][INDEX(x)]);
+                    if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'w':
                 if (INDEX(x-1) < 0) {
-                    printf("You can't go that way\n");
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
+                    printw("You can't go that way\n");
+                    refresh();
                     break;
                 } else {
                     x--;
-                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world[INDEX(y)][INDEX(x)]);
+                    if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'f':
@@ -97,8 +121,8 @@ int main(int argc, char* argv[]) {
                 } else {
                     x = x_fly;
                     y = y_fly;
-                    if (!world[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world[INDEX(y)][INDEX(x)]);
+                    if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
+                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 'q':
@@ -111,18 +135,7 @@ int main(int argc, char* argv[]) {
     } while (input != 'q');
 
     //Memory cleanup
-    if (world == NULL) return 0;
-    for (i = 0; i < SIZE; i++) {
-        if (world[i] == NULL) continue;
-        for (j = 0; j < SIZE; j++) {
-            if (world[i][j] == NULL) continue;
-            for (k = 0; k < Y_WIDTH; k++) {
-                if (world[i][j]->map[k] != NULL) free(world[i][j]->map[k]);
-            }
-        }
-        free(world[i]);
-    }
-    free(world);
+    free_world(world);
 
     endwin();
     return 0;

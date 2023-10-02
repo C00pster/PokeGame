@@ -110,7 +110,10 @@ int* get_trainer_weights(TrainerType type, int* result) {
         case SWIMMER:
             get_swimmer_weights(result);
             break;
-        case OTHER:
+        case PACER:
+        case WANDERER:
+        case SENTRY:
+        case EXPLORER:
             get_other_weights(result);
             break;
         case NUM_TRAINERS:

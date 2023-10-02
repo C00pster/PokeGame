@@ -25,6 +25,14 @@ int compare(void* a, void* b) {
     return nodeA->distance - nodeB->distance;
 }
 
+unsigned int safe_add(unsigned int a, unsigned int b) {
+    if (b > 0 && a > UINT_MAX - b) {
+        return UINT_MAX;
+    } else {
+        return a + b;
+    }
+}
+
 void dijkstra(unsigned int startCol, unsigned int startRow, unsigned int** distances, int weights[Y_WIDTH][X_WIDTH]){
     int i, j;
     unsigned int x, y, last_weight;
@@ -49,7 +57,7 @@ void dijkstra(unsigned int startCol, unsigned int startRow, unsigned int** dista
                 int newX = x + i;
                 int newY = y + j;
                 if (isValid(newX, newY) && !visited[newY][newX]) {
-                    int newDistance = current->distance + last_weight;
+                    int newDistance = safe_add(current->distance, last_weight);
                     if (newDistance < distances[newY][newX]) {
                         distances[newY][newX] = newDistance;
                         Node* newNode = create_node(newX, newY, newDistance, weights[newY][newX]);
@@ -64,7 +72,7 @@ void dijkstra(unsigned int startCol, unsigned int startRow, unsigned int** dista
     free_priority_queue(pq);
 }
 
-unsigned int** generate_distance_map(Map* map, int x, int y, TrainerType type) {
+unsigned int** generate_distance_map(GameMap* game_map, int x, int y, TrainerType type) {
     int i, j;
     int tile_weights[NUM_TILES];
     get_trainer_weights(type, tile_weights);
@@ -80,7 +88,7 @@ unsigned int** generate_distance_map(Map* map, int x, int y, TrainerType type) {
 
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            travel_weights[j][i] = tile_weights[map->map[j][i]->type];
+            travel_weights[j][i] = tile_weights[game_map->tiles[j][i]->type];
         }
     }
 

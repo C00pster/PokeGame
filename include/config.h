@@ -7,4 +7,6 @@
 #define OFFSET 200
 #define INDEX(i) ((i) + OFFSET)
 
+extern int num_trainers;
+
 #endif

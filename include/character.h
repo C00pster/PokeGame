@@ -6,7 +6,10 @@ typedef enum {
     HIKER,
     RIVAL,
     SWIMMER,
-    OTHER,
+    PACER,
+    WANDERER,
+    SENTRY,
+    EXPLORER,
     NUM_TRAINERS
 } TrainerType;
 

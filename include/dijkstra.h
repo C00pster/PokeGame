@@ -2,7 +2,7 @@
 #define DIJKSTRA_H
 
 #include "data_structures/priority_queue.h"
-#include "map/map_generation.h"
+#include "map/game_map.h"
 #include "character.h"
 #include "limits.h"
 
@@ -14,6 +14,6 @@ typedef struct {
 } Node;
 
 Node* create_node(int row, int col, unsigned int distance, unsigned int last_weight);
-unsigned int** generate_distance_map(Map* map, int x, int y, TrainerType type);
+unsigned int** generate_distance_map(GameMap* game_map, int x, int y, TrainerType type);
 
 #endif // DIJKSTRA_H

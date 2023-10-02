@@ -83,6 +83,9 @@ void* pop(PriorityQueue* pq) {
 }
 
 void free_priority_queue(PriorityQueue* pq) {
+    for (int i = 0; i < pq->size; i++) {
+        free(pq->array[i]);
+    }
     free(pq->array);
     free(pq);
 }

@@ -26,6 +26,7 @@ typedef struct {
 } Tile;
 
 Tile* create_tile(TileType type, __int8_t x, __int8_t y);
+void free_tile(Tile* tile);
 char get_tile_char(Tile* tile);
 int get_tile_weight(Tile* tile, TrainerType trainer);
 

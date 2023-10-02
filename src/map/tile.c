@@ -51,3 +51,7 @@ char get_tile_char(Tile* tile) {
     }
     return result;
 }
+
+void free_tile(Tile* tile) {
+    free(tile);
+}
