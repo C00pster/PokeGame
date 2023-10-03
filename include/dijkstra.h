@@ -14,6 +14,6 @@ typedef struct {
 } Node;
 
 Node* create_node(int row, int col, unsigned int distance, unsigned int last_weight);
-unsigned int** generate_distance_map(GameMap* game_map, int x, int y, TrainerType type);
+void generate_distance_maps(World* world, int world_x, int world_y, int pc_x, int pc_y);
 
 #endif // DIJKSTRA_H

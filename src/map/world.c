@@ -4,15 +4,16 @@
 #include "map/world.h"
 #include "map/game_map.h"
 #include "config.h"
+#include "dijkstra.h"
 
 World* create_world() {
     int i;
-    World* world = (World*)malloc(sizeof(World));
+    World* world = (World*) malloc(sizeof(World));
     if (!world) {
         printf("Error allocating memory for world\n");
         return NULL;
     }
-    world->maps = (GameMap***)malloc(sizeof(GameMap***) * SIZE); //Creates an array of pointers to maps
+    world->maps = (GameMap***) malloc(sizeof(GameMap***) * SIZE); //Creates an array of pointers to maps
     if (!world->maps) {
         printf("Error allocating memory for world\n");
         return NULL;
@@ -26,8 +27,7 @@ World* create_world() {
         memset(world->maps[i], '\0', sizeof(GameMap*) * SIZE);
     }
 
-    int x = 0, y = 0;
-    generate_map(world, x, y);
+    generate_map(world, 0, 0);
 
     return world;
 }

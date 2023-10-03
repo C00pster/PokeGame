@@ -6,8 +6,7 @@
 
 typedef struct World {
     GameMap*** maps;
-    int pc_x, pc_y;
-    int**** distance_maps;
+    unsigned int*** distance_maps;
     Trainer** trainers;
 } World;
 

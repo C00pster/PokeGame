@@ -9,20 +9,6 @@
 #include "character.h"
 #include "config.h"
 
-void print_map(GameMap* game_map) {
-    int i, j;
-
-    clear();
-
-    for (j = 0; j < Y_WIDTH; j++) {
-        for (i = 0; i < X_WIDTH; i++) {
-            printw("%c", get_tile_char(game_map->tiles[j][i]));
-        }
-        printw("\n");
-    }
-    refresh();
-}
-
 int main(int argc, char* argv[]) {
     srand(time(NULL));
     int x = 0, y = 0;
@@ -126,6 +112,9 @@ int main(int argc, char* argv[]) {
                 }
                 break;
             case 'q':
+                break;
+            case ' ':
+                // step();
                 break;
             default:
                 printf("Invalid command\n");

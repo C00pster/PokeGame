@@ -4,6 +4,7 @@
 #include "config.h"
 #include "dijkstra.h"
 #include "data_structures/priority_queue.h"
+#include "map/world.h"
 
 Node* create_node(int x, int y, unsigned int distance, unsigned int last_weight) {
     Node* node = (Node*) malloc(sizeof(Node));
@@ -14,7 +15,7 @@ Node* create_node(int x, int y, unsigned int distance, unsigned int last_weight)
     return node;
 }
 
-bool isValid(int x, int y) {
+bool is_valid(int x, int y) {
     return (x >= 0 && x < X_WIDTH && y >= 0 && y < Y_WIDTH);
 }
 
@@ -56,7 +57,7 @@ void dijkstra(unsigned int startCol, unsigned int startRow, unsigned int** dista
             for (i = -1; i <= 1; i++) {
                 int newX = x + i;
                 int newY = y + j;
-                if (isValid(newX, newY) && !visited[newY][newX]) {
+                if (is_valid(newX, newY) && !visited[newY][newX]) {
                     int newDistance = safe_add(current->distance, last_weight);
                     if (newDistance < distances[newY][newX]) {
                         distances[newY][newX] = newDistance;
@@ -72,7 +73,7 @@ void dijkstra(unsigned int startCol, unsigned int startRow, unsigned int** dista
     free_priority_queue(pq);
 }
 
-unsigned int** generate_distance_map(GameMap* game_map, int x, int y, TrainerType type) {
+unsigned int** generate_distance_map(GameMap* game_map, int pc_x, int pc_y, TrainerType type) {
     int i, j;
     int tile_weights[NUM_TILES];
     get_trainer_weights(type, tile_weights);
@@ -92,7 +93,15 @@ unsigned int** generate_distance_map(GameMap* game_map, int x, int y, TrainerTyp
         }
     }
 
-    dijkstra(x, y, distances, travel_weights);
+    dijkstra(pc_x, pc_y, distances, travel_weights);
 
     return distances;
+}
+
+void generate_distance_maps(World* world, int world_x, int world_y, int pc_x, int pc_y) {
+    int i;
+    world->distance_maps = malloc(sizeof(unsigned int**) * NUM_TRAINERS);
+    for (i = 1; i < NUM_TRAINERS; i++) {
+        world->distance_maps[i] = generate_distance_map(world->maps[INDEX(world_y)][INDEX(world_x)], pc_x, pc_y, i);
+    }
 }
