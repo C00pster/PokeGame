@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
     initscr();
     raw();
     noecho();
+    curs_set(0);
     keypad(stdscr, TRUE);
     print_map(world->maps[INDEX(y)][INDEX(x)]); //Prints the map
 
