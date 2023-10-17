@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -ggdb -Wall -lm -lncurses -Iinclude -MMD -MP #-Werror
+CFLAGS = -ggdb -Wall -Werror -lm -lncurses -Iinclude -MMD -MP
 SRCDIR = src
 BINDIR = bin
 TARGET = run

@@ -7,5 +7,7 @@
 Trainer* next_movement(GameMap* map, TrainerMap* trainer_map);
 void add_trainer_to_movement_queue(Trainer* trainer, int distance);
 void init_movement_queue();
+void clear_movement_queue();
+void free_movement_queue();
 
 #endif // MAP_MOVEMENT_H

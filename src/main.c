@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ncurses.h>
+#include <unistd.h>
 
 #include "map/world.h"
 #include "map/movement.h"
@@ -11,9 +12,6 @@
 int num_trainers = 10;
 
 int main(int argc, char* argv[]) {
-    struct timespec req;
-    req.tv_sec = 0;
-    req.tv_nsec = 25000000;
     srand(time(NULL));
     int x = 0, y = 0;
     int i;
@@ -51,17 +49,15 @@ int main(int argc, char* argv[]) {
     curs_set(0); //Set the cursor to be invisible
     keypad(stdscr, TRUE);
 
-    Trainer* movement_trainer = NULL;
-
     do {
         print_map(world, INDEX(x), INDEX(y));
-        mvprintw(Y_WIDTH + 1, 0, "You are at (%d,%d)", x, y);
+        mvprintw(Y_WIDTH, 0, "You are at (%d,%d)", x, y);
         refresh();
 
-        input=getch();
+        input = getch();
         if (input == ERR) { //No key was pressed
-            movement_trainer = next_movement(world->maps[INDEX(y)][INDEX(x)], world->trainer_map);
-            nanosleep(&req, NULL);
+            next_movement(world->maps[INDEX(y)][INDEX(x)], world->trainer_map);
+            usleep(25000);
             continue;
         }
 
@@ -111,6 +107,7 @@ int main(int argc, char* argv[]) {
 
     //Memory cleanup
     free_world(world);
+    free_movement_queue();
 
     endwin();
     return 0;

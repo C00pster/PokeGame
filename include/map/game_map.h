@@ -12,6 +12,7 @@ typedef struct {
 } GameMap;
 
 GameMap* generate_game_map(__int8_t top_path, __int8_t bottom_path, __int8_t left_path, __int8_t right_path, int distance);
+void generate_weight_map(GameMap* game_map, int* tile_weights, int trainer_index);
 void free_map(GameMap* game_map);
 
 #endif

@@ -55,12 +55,20 @@ void add_pc(World* world, int x, int y) {
     return;
 }
 
+void generate_weight_maps(GameMap* game_map) {
+    int i;
+    int tile_weights[NUM_TILES];
+    for (i = PC + 1; i < NUM_TRAINERS; i++) {
+        get_trainer_weights(i, tile_weights);
+        generate_weight_map(game_map, tile_weights, i);
+    }
+}
+
 
 //Creates a map if it doesn't exist. Adds trainers to created map
 void generate_map(World* world, int x, int y) {
-    clear_trainer_map(world->trainer_map);
-
-    if (x != 0 || y != 0) {
+    if (world->maps[INDEX(y)][INDEX(x)]);
+    else if (x != 0 || y != 0) {
         PathTracker* p = get_paths(world, INDEX(x), INDEX(y));
         int distance = sqrt(pow(x, 2) + pow(y, 2));
         world->maps[INDEX(y)][INDEX(x)] = generate_game_map(p->top, p->bottom, p->left, p->right, distance);
@@ -68,8 +76,9 @@ void generate_map(World* world, int x, int y) {
     } else {
         world->maps[INDEX(y)][INDEX(x)] = generate_game_map(X_WIDTH/2, X_WIDTH/2, Y_WIDTH/2, Y_WIDTH/2, 0);
     }
+    generate_weight_maps(world->maps[INDEX(y)][INDEX(x)]);
+    add_trainers(world->maps[INDEX(y)][INDEX(x)], world->trainer_map, x, y);
     add_pc(world, x, y); //Also generates distance maps
-    add_trainers(world->maps[INDEX(y)][INDEX(x)], world->trainer_map, x, y); //Why does this take so long?
 
     return;
 }
@@ -116,7 +125,6 @@ void print_map(World* world, int x, int y) {
         }
         printw("\n");
     }
-    refresh();
 }
 
 void free_world(World* world) {

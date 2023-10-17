@@ -91,9 +91,10 @@ Trainer* create_trainer(TrainerType type, int x, int y) {
     trainer->type = type;
     trainer->x = x;
     trainer->y = y;
+    trainer->direction = rand() % NUM_DIRECTIONS;
 
-    int* weights = malloc(sizeof(int) * NUM_TILES);
-    trainer->weights = get_trainer_weights(type, weights);
+    trainer->weights = malloc(sizeof(int) * NUM_TILES);
+    get_trainer_weights(type, trainer->weights);
 
     return trainer;
 }
@@ -126,116 +127,125 @@ int* get_trainer_weights(TrainerType type, int* result) {
     return result;
 }
 
-Trainer* add_hiker(GameMap* game_map, TrainerMap* trainer_map) {
-    int x = rand() % (X_WIDTH - 1) + 1;
-    int y = rand() % (Y_WIDTH - 1) + 1;
+int is_valid_coor(int x, int y, TrainerMap* trainer_map) {
+    if (1==1) return 1;
+    return 0;
+}
 
-    int is_valid = 1;
-    while (is_valid != 0) {
-        if (game_map->tiles[y][x]->type != WATER && trainer_map->trainers[y][x] == NULL) {
-            is_valid = 0;
+Trainer* add_hiker(GameMap* game_map, TrainerMap* trainer_map) {
+    int x = rand() % (X_WIDTH - 2) + 1;
+    int y = rand() % (Y_WIDTH - 2) + 1;
+
+    int valid = 1;
+    while (valid != 0) {
+        if (is_valid_coor(x, y, trainer_map) && game_map->tiles[y][x]->type != WATER) {
+            valid = 0;
         } else {
-            x = rand() % (X_WIDTH - 1) + 1;
-            y = rand() % (Y_WIDTH - 1) + 1;
+            x = rand() % (X_WIDTH - 2) + 1;
+            y = rand() % (Y_WIDTH - 2) + 1;
         }
     }
 
     Trainer* trainer = create_trainer(HIKER, x, y);
     trainer_map->trainers[y][x] = trainer;
+    trainer_map->num_trainers++;
     return trainer;
 }
 
 Trainer* add_rival(GameMap* game_map, TrainerMap* trainer_map) {
-    int x = rand() % (X_WIDTH - 1) + 1;
-    int y = rand() % (Y_WIDTH - 1) + 1;
+    int x = rand() % (X_WIDTH - 2) + 1;
+    int y = rand() % (Y_WIDTH - 2) + 1;
 
-    int is_valid = 1;
-    while (is_valid != 0) {
+    int valid = 1;
+    while (valid != 0) {
         TileType tile_type = game_map->tiles[y][x]->type;
-        if (tile_type != MOUNTAIN && tile_type != WATER && tile_type != FOREST && trainer_map->trainers[y][x] == NULL) {
-            is_valid = 0;
+        if (is_valid_coor(x, y, trainer_map) && tile_type != MOUNTAIN && tile_type != WATER && tile_type != FOREST) {
+            valid = 0;
         } else {
-            x = rand() % (X_WIDTH - 1) + 1;
-            y = rand() % (Y_WIDTH - 1) + 1;
+            x = rand() % (X_WIDTH - 2) + 1;
+            y = rand() % (Y_WIDTH - 2) + 1;
         }
     }
 
     Trainer* trainer = create_trainer(RIVAL, x, y);
     trainer_map->trainers[y][x] = trainer;
+    trainer_map->num_trainers++;
     return trainer;
 }
 
 Trainer* add_swimmer(GameMap* game_map, TrainerMap* trainer_map) {
-    int x = rand() % (X_WIDTH - 1) + 1;
-    int y = rand() % (Y_WIDTH - 1) + 1;
+    int x = rand() % (X_WIDTH - 2) + 1;
+    int y = rand() % (Y_WIDTH - 2) + 1;
 
-    int is_valid = 1;
-    while (is_valid != 0) {
-        if (game_map->tiles[y][x]->type == WATER && trainer_map->trainers[y][x] == NULL) {
-            is_valid = 0;
+    int valid = 1;
+    while (valid != 0) {
+        if (is_valid_coor(x, y, trainer_map) && game_map->tiles[y][x]->type == WATER) {
+            valid = 0;
         } else {
-            x = rand() % (X_WIDTH - 1) + 1;
-            y = rand() % (Y_WIDTH - 1) + 1;
+            x = rand() % (X_WIDTH - 2) + 1;
+            y = rand() % (Y_WIDTH - 2) + 1;
         }
     }
 
     Trainer* trainer = create_trainer(SWIMMER, x, y);
     trainer_map->trainers[y][x] = trainer;
+    trainer_map->num_trainers++;
     return trainer;
 }
 
 Trainer* add_other(GameMap* game_map, TrainerType trainer_type, TrainerMap* trainer_map) {
-    int x = rand() % (X_WIDTH - 1) + 1;
-    int y = rand() % (Y_WIDTH - 1) + 1;
+    int x = rand() % (X_WIDTH - 2) + 1;
+    int y = rand() % (Y_WIDTH - 2) + 1;
 
-    int is_valid = 1;
-    while (is_valid != 0) {
+    int valid = 1;
+    while (valid != 0) {
         TileType tile_type = game_map->tiles[y][x]->type;
-        if (tile_type != WATER && tile_type != MOUNTAIN && tile_type != FOREST && trainer_map->trainers[y][x] == NULL) {
-            is_valid = 0;
+        if (is_valid_coor(x, y, trainer_map) && tile_type != WATER && tile_type != MOUNTAIN && tile_type != FOREST) {
+            valid = 0;
         } else {
-            x = rand() % (X_WIDTH - 1) + 1;
-            y = rand() % (Y_WIDTH - 1) + 1;
+            x = rand() % (X_WIDTH - 2) + 1;
+            y = rand() % (Y_WIDTH - 2) + 1;
         }
     }
 
     Trainer* trainer = create_trainer(trainer_type, x, y);
     trainer_map->trainers[y][x] = trainer;
+    trainer_map->num_trainers++;
     return trainer;
 }
 
 void add_trainer(TrainerType type, GameMap* game_map, TrainerMap* trainer_map) {
     Trainer* trainer;
+    int x = rand() % (X_WIDTH - 2) + 1;
+    int y = rand() % (Y_WIDTH - 2) + 1;
+
+    int valid = 1;
+    while (valid != 0) {
+        if (trainer_map->trainers[y][x] == NULL && game_map->tile_weight_maps[type][y][x] != INT_MAX) {
+            valid = 0;
+        } else {
+            x = rand() % (X_WIDTH - 2) + 1;
+            y = rand() % (Y_WIDTH - 2) + 1;
+        }
+    }
+
+    trainer = create_trainer(type, x, y);
+    trainer_map->trainers[y][x] = trainer;
+    trainer_map->num_trainers++;
+    
     switch(type) {
         case PC:
             exit(1);
         case HIKER:
-            trainer = add_hiker(game_map, trainer_map);
-            add_trainer_to_movement_queue(trainer, 0);
-            break;
         case RIVAL:
-            trainer = add_rival(game_map, trainer_map);
-            add_trainer_to_movement_queue(trainer, 0);
-            break;
         case SWIMMER:
-            trainer = add_swimmer(game_map, trainer_map);
-            add_trainer_to_movement_queue(trainer, 0);
-            break;
         case PACER:
-            trainer = add_other(game_map, PACER, trainer_map);
-            add_trainer_to_movement_queue(trainer, 0);
-            break;
         case WANDERER:
-            trainer = add_other(game_map, WANDERER, trainer_map);
+        case EXPLORER:
             add_trainer_to_movement_queue(trainer, 0);
             break;
         case SENTRY:
-            trainer = add_other(game_map, SENTRY, trainer_map);
             //Sentries don't move
-            break;
-        case EXPLORER:
-            trainer = add_other(game_map, EXPLORER, trainer_map);
-            add_trainer_to_movement_queue(trainer, 0);
             break;
         case NUM_TRAINERS:
             exit(1);
@@ -243,6 +253,8 @@ void add_trainer(TrainerType type, GameMap* game_map, TrainerMap* trainer_map) {
 }
 
 void add_trainers(GameMap* game_map, TrainerMap* trainer_map, int x, int y) {
+    clear_trainer_map(trainer_map);
+    clear_movement_queue();
     TrainerType trainer_types[6] = {HIKER, RIVAL, PACER, WANDERER, SENTRY, EXPLORER}; //excluding swimmer for now
     int i;
 
@@ -318,6 +330,7 @@ void clear_trainer_map(TrainerMap* trainer_map) {
             trainer_map->trainers[i][j] = NULL;
         }
     }
+    trainer_map->num_trainers = 0;
 }
 
 void free_trainer(Trainer* trainer) {

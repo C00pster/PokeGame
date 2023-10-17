@@ -123,6 +123,16 @@ GameMap* generate_game_map(__int8_t top_path, __int8_t bottom_path, __int8_t lef
     return m;
 }
 
+void generate_weight_map(GameMap* game_map, int* weights, int trainer_index) {
+    int i, j;
+    for (j = 0; j < Y_WIDTH; j++) {
+        for (i = 0; i < X_WIDTH; i++) {
+            int weight = weights[game_map->tiles[j][i]->type];
+            game_map->tile_weight_maps[trainer_index][j][i] = weight;
+        }
+    }
+}
+
 void free_map(GameMap* game_map) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {

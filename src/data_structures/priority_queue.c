@@ -24,6 +24,7 @@ PriorityQueue* create_priority_queue(int capacity, int (*compare)(void*, void*))
     priority_queue->array = (void**) malloc(sizeof(void*) * capacity);
     if (!priority_queue->array) {
         printf("Failed to allocate priority queue array");
+        free(priority_queue);
         return NULL;
     }
     priority_queue->size = 0;
@@ -33,27 +34,30 @@ PriorityQueue* create_priority_queue(int capacity, int (*compare)(void*, void*))
 }
 
 void push(PriorityQueue* pq, void* item) {
+    if (!pq) return;
+
     if (pq->size >= pq->capacity) {
         pq->capacity *= 2;
-        pq->array = realloc(pq->array, sizeof(void*) * pq->capacity);
-        if (!pq->array) {
+        void** new_array = realloc(pq->array, sizeof(void*) * pq->capacity);
+        if (!new_array) {
             printf("Failed to resize priority queue");
             return;
         }
+        pq->array = new_array;
     }
 
     pq->array[pq->size++] = item;
 
     int current_index = pq->size - 1;
     //Bubble up
-    while (current_index > 0 && pq->compare(pq->array[current_index],pq->array[(current_index-1)/2]) > 0) {
+    while (current_index > 0 && pq->compare(pq->array[current_index], pq->array[(current_index-1)/2]) < 0) {
         swap_pointers(pq->array[current_index], pq->array[(current_index-1)/2]);
         current_index = (current_index-1)/2;
     }
 }
 
 void* pop(PriorityQueue* pq) {
-    if (pq->size == 0) return NULL;
+    if (!pq || pq->size == 0) return NULL;
 
     void* result = pq->array[0];
     pq->array[0] = pq->array[--pq->size];
@@ -71,7 +75,7 @@ void* pop(PriorityQueue* pq) {
             break;
         }
 
-        swap_pointers(pq->array[current], pq->array[child]);
+        swap_pointers(&pq->array[current], &pq->array[child]);
         current = child;
     }
 
@@ -79,6 +83,7 @@ void* pop(PriorityQueue* pq) {
 }
 
 void free_priority_queue(PriorityQueue* pq) {
+    if (!pq) return;
     for (int i = 0; i < pq->size; i++) {
         free(pq->array[i]);
     }

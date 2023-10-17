@@ -17,11 +17,24 @@ typedef enum {
     NUM_TRAINERS
 } TrainerType;
 
+typedef enum {
+    NORTH,
+    NORTHEAST,
+    EAST,
+    SOUTHEAST,
+    SOUTH,
+    SOUTHWEST,
+    WEST,
+    NORTHWEST,
+    NUM_DIRECTIONS
+} Direction;
+
 //Contains an array of tile weights for the trainer ordered by the TileType enum, the x and y coordinate of the trainer on the GameMap, and the TrainerType of the trainer
 typedef struct {
     int* weights;
     int x, y;
     TrainerType type;
+    Direction direction;
 } Trainer;
 
 //Contains a 2d array of trainer pointers, the number of trainers, and an array of 2d array distance maps ordered by the TrainerType enum
