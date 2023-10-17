@@ -2,10 +2,9 @@
 #define DIJKSTRA_H
 
 #include "data_structures/priority_queue.h"
-#include "map/game_map.h"
-#include "character.h"
-#include "limits.h"
+#include "map/world.h"
 
+//Contains the x and y position of the node on the GameMap, the distance from the PC, and the weight of the last node (used for backtracking)
 typedef struct {
     unsigned int row;
     unsigned int col;

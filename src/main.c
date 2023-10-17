@@ -1,20 +1,23 @@
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ncurses.h>
 
-#include "map/game_map.h"
-#include "map/tile.h"
 #include "map/world.h"
-#include "character.h"
+#include "map/movement.h"
 #include "config.h"
 
+int num_trainers = 10;
+
 int main(int argc, char* argv[]) {
+    struct timespec req;
+    req.tv_sec = 0;
+    req.tv_nsec = 25000000;
     srand(time(NULL));
     int x = 0, y = 0;
     int i;
     char input;
-    int num_trianers = 10;
 
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--num-trainers") == 0) {
@@ -22,14 +25,16 @@ int main(int argc, char* argv[]) {
                 printf("Error: --num-trainers requires an argument\n");
                 return 1;
             } else {
-                num_trianers = atoi(argv[i+1]);
-                if (num_trianers < 0) {
+                num_trainers = atoi(argv[i+1]);
+                if (num_trainers < 0) {
                     printf("Error: --num-trainers requires a positive integer argument\n");
                     return 1;
                 }
             }
         }
     }
+
+    init_movement_queue();
 
     World* world = create_world();
     if (!world) {
@@ -41,86 +46,66 @@ int main(int argc, char* argv[]) {
     
     initscr();
     raw();
-    noecho();
-    curs_set(0);
+    noecho(); //Typed characters are not echoed
+    nodelay(stdscr, TRUE); //Set getch() to be non-blocking
+    curs_set(0); //Set the cursor to be invisible
     keypad(stdscr, TRUE);
-    print_map(world->maps[INDEX(y)][INDEX(x)]); //Prints the map
+
+    Trainer* movement_trainer = NULL;
 
     do {
-        printw("You are at (%d,%d)", x, y);
-        input = getch();
+        print_map(world, INDEX(x), INDEX(y));
+        mvprintw(Y_WIDTH + 1, 0, "You are at (%d,%d)", x, y);
+        refresh();
+
+        input=getch();
+        if (input == ERR) { //No key was pressed
+            movement_trainer = next_movement(world->maps[INDEX(y)][INDEX(x)], world->trainer_map);
+            nanosleep(&req, NULL);
+            continue;
+        }
 
         switch (input) {
-            case 'n':
+            case 'w':
                 if (INDEX(y+1) >= SIZE) {
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
-                    printw("You can't go that way\n");
-                    refresh();
-                    break;
+                    mvprintw(Y_WIDTH + 2, 0, "You can't go that way");
                 } else {
                     y++;
                     if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
             case 's':
                 if (INDEX(y-1) < 0) {
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
-                    printw("You can't go that way\n");
-                    refresh();
-                    break;
+                    mvprintw(Y_WIDTH + 1, 0, "You can't go that way");
                 } else {
                     y--;
                     if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
-            case 'e':
+            case 'd':
                 if (INDEX(x+1) >= SIZE) {
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
-                    printw("You can't go that way\n");
-                    refresh();
-                    break;
+                    mvprintw(Y_WIDTH + 1, 0, "You can't go that way");
                 } else {
                     x++;
                     if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
-            case 'w':
+            case 'a':
                 if (INDEX(x-1) < 0) {
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                     printw("You can't go that way\n");
-                    refresh();
-                    break;
                 } else {
                     x--;
                     if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
                 }
                 break;
-            case 'f':
-                int x_fly, y_fly;
-                scanf(" %d %d", &x_fly, &y_fly);
-                if (INDEX(x_fly) < 0 || INDEX(x_fly) >= SIZE || INDEX(y_fly) < 0 || INDEX(y_fly) >= SIZE) {
-                    printf("Invalid coordinates\n");
-                    break;
-                } else {
-                    x = x_fly;
-                    y = y_fly;
-                    if (!world->maps[INDEX(y)][INDEX(x)]) generate_map(world, x, y);
-                    print_map(world->maps[INDEX(y)][INDEX(x)]);
-                }
-                break;
+            // case ' ':
+            //     movementTrainer = next_movement(world->maps[INDEX(y)][INDEX(x)], world->trainer_map);
+            //     break;
             case 'q':
                 break;
-            case ' ':
-                // step();
-                break;
             default:
-                printf("Invalid command\n");
+                mvprintw(Y_WIDTH + 1, 0, "Invalid input");
                 break;
-            clear();
         }
     } while (input != 'q');
 

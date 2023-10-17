@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "map/path.h"
 #include "config.h"
 
@@ -142,31 +144,4 @@ void generate_path(GameMap* m, __int8_t top_path, __int8_t bottom_path, __int8_t
     }
 
     return;
-}
-
-Path_Tracker* get_paths(World* world, int x, int y) {
-    Path_Tracker* path_tracker = (Path_Tracker*) malloc(sizeof(Path_Tracker));
-
-    if (x + 1 < SIZE) {
-        if (world->maps[y][x+1]) {
-            path_tracker->right = world->maps[y][x+1]->left_path;
-        } else path_tracker->right = 0;
-    } else path_tracker->right = -1;
-    if (x - 1 > 0) {
-        if (world->maps[y][x-1]) {
-            path_tracker->left = world->maps[y][x-1]->right_path;
-        } else path_tracker->left = 0;
-    } else path_tracker->left = -1;
-    if (y + 1 < SIZE) {
-        if (world->maps[y+1][x]) {
-            path_tracker->bottom = world->maps[y+1][x]->top_path;
-        } else path_tracker->bottom = 0;
-    } else path_tracker->bottom = -1;
-    if (y - 1 > 0) {
-        if (world->maps[y-1][x]) {
-            path_tracker->top = world->maps[y-1][x]->bottom_path;
-        } else path_tracker->top = 0;
-    } else path_tracker->top = -1;
-
-    return path_tracker;
 }

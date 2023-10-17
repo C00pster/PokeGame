@@ -32,10 +32,6 @@ PriorityQueue* create_priority_queue(int capacity, int (*compare)(void*, void*))
     return priority_queue;
 }
 
-bool is_empty(PriorityQueue* pq) {
-    return pq->size == 0;
-}
-
 void push(PriorityQueue* pq, void* item) {
     if (pq->size >= pq->capacity) {
         pq->capacity *= 2;
@@ -57,7 +53,7 @@ void push(PriorityQueue* pq, void* item) {
 }
 
 void* pop(PriorityQueue* pq) {
-    if (is_empty(pq)) return NULL;
+    if (pq->size == 0) return NULL;
 
     void* result = pq->array[0];
     pq->array[0] = pq->array[--pq->size];

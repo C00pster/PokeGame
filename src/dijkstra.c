@@ -1,10 +1,10 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 
-#include "config.h"
 #include "dijkstra.h"
-#include "data_structures/priority_queue.h"
-#include "map/world.h"
+#include "config.h"
 
 Node* create_node(int x, int y, unsigned int distance, unsigned int last_weight) {
     Node* node = (Node*) malloc(sizeof(Node));
@@ -100,8 +100,8 @@ unsigned int** generate_distance_map(GameMap* game_map, int pc_x, int pc_y, Trai
 
 void generate_distance_maps(World* world, int world_x, int world_y, int pc_x, int pc_y) {
     int i;
-    world->distance_maps = malloc(sizeof(unsigned int**) * NUM_TRAINERS);
+    world->trainer_map->distance_maps = malloc(sizeof(unsigned int**) * NUM_TRAINERS);
     for (i = 1; i < NUM_TRAINERS; i++) {
-        world->distance_maps[i] = generate_distance_map(world->maps[INDEX(world_y)][INDEX(world_x)], pc_x, pc_y, i);
+        world->trainer_map->distance_maps[i] = generate_distance_map(world->maps[INDEX(world_y)][INDEX(world_x)], pc_x, pc_y, i);
     }
 }

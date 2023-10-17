@@ -1,55 +1,43 @@
 #include <stdlib.h>
+#include <ncurses.h>
 
 #include "map/tile.h"
-#include "character.h"
+#include "trainer.h"
 
-Tile* create_tile(TileType type, __int8_t x, __int8_t y) {
+Tile* create_tile(TileType type, int x, int y) {
     Tile* tile = (Tile*)malloc(sizeof(Tile));
     tile->type = type;
     tile->x = x;
     tile->y = y;
-    tile->trainer = NUM_TRAINERS;
 
     return tile;
 }
 
 char get_tile_char(Tile* tile) {
-    if (tile->trainer != NUM_TRAINERS) {
-        return '@';
-    }
-    char result;
     switch(tile->type) {
         case BOULDER:
         case MOUNTAIN:
-            result = '%';
-            break;
+            return '%';
         case TREE:
         case FOREST:
-            result = '^';
-            break;
+            return '^';
         case PATH:
         case GATE:
-            result = '#';
-            break;
+            return '#';
         case PMART:
-            result = 'M';
-            break;
+            return 'M';
         case PCNTR:
-            result = 'C';
-            break;
+            return 'C';
         case TGRASS:
-            result = ':';
-            break;
+            return ':';
         case SGRASS:
-            result = '.';     
-            break;   
+            return '.';       
         case WATER:
-            result = '~';
-            break;
+            return '~';
         case NUM_TILES:
             exit(1);
     }
-    return result;
+    return '!'; // This should never happen
 }
 
 void free_tile(Tile* tile) {

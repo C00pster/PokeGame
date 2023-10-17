@@ -1,9 +1,9 @@
-#include <stdlib.h>
-#include "../character.h"
-
 #ifndef TILE_H
 #define TILE_H
 
+#include <stdint.h>
+
+//Represents the different types of tiles
 typedef enum {
     BOULDER,
     TREE,
@@ -19,15 +19,14 @@ typedef enum {
     NUM_TILES
 } TileType;
 
+//Contains the type of tile and the x and y coordinates of the tile in the GameMap (game_map.h)
 typedef struct {
     TileType type;
-    __int8_t x, y;
-    TrainerType trainer;
+    int x, y;
 } Tile;
 
-Tile* create_tile(TileType type, __int8_t x, __int8_t y);
+Tile* create_tile(TileType type, int x, int y);
 void free_tile(Tile* tile);
 char get_tile_char(Tile* tile);
-int get_tile_weight(Tile* tile, TrainerType trainer);
 
 #endif // TILE_H
