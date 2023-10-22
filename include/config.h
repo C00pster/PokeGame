@@ -7,6 +7,8 @@
 #define OFFSET 200
 #define INDEX(i) ((i) + OFFSET)
 
+#include <ncurses.h>
+
 extern int num_trainers; //Set in main.c
 
 #endif

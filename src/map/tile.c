@@ -35,7 +35,7 @@ char get_tile_char(Tile* tile) {
         case WATER:
             return '~';
         case NUM_TILES:
-            exit(1);
+            exit(-1);
     }
     return '!'; // This should never happen
 }

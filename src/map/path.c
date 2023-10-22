@@ -48,52 +48,84 @@ void generate_path(GameMap* m, __int8_t top_path, __int8_t bottom_path, __int8_t
     m->vertical_path_col = vertical_path_col;
 
     //Creates a 3 tile long path out from each entrance
-    if (bottom_path != -1) m->tiles[0][bottom_path] = create_tile(GATE, bottom_path, 0);
-    if (top_path != -1) m->tiles[Y_WIDTH - 1][top_path] = create_tile(GATE, top_path, Y_WIDTH - 1);
-    if (left_path != -1) m->tiles[left_path][0] = create_tile(GATE, 0, left_path);
-    if (right_path != -1) m->tiles[right_path][X_WIDTH - 1] = create_tile(GATE, X_WIDTH - 1, right_path);
+    if (bottom_path != -1) {
+        free(m->tiles[0][bottom_path]);
+        m->tiles[0][bottom_path] = create_tile(GATE, bottom_path, 0);
+    }
+    if (top_path != -1) {
+        free(m->tiles[Y_WIDTH - 1][top_path]);
+        m->tiles[Y_WIDTH - 1][top_path] = create_tile(GATE, top_path, Y_WIDTH - 1);
+    }
+    if (left_path != -1) {
+        free(m->tiles[left_path][0]);
+        m->tiles[left_path][0] = create_tile(GATE, 0, left_path);
+    }
+    if (right_path != -1) {
+        free(m->tiles[right_path][X_WIDTH - 1]);
+        m->tiles[right_path][X_WIDTH - 1] = create_tile(GATE, X_WIDTH - 1, right_path);
+    }
     for (i = 1; i < 3; i++) {
-        if (bottom_path != -1) m->tiles[i][bottom_path] = create_tile(PATH, bottom_path, i);
-        if (top_path != -1) m->tiles[Y_WIDTH - i - 1][top_path] = create_tile(PATH, top_path, Y_WIDTH - i - 1);
-        if (left_path != -1) m->tiles[left_path][i] = create_tile(PATH, i, left_path);
-        if (right_path != -1) m->tiles[right_path][X_WIDTH - i - 1] = create_tile(PATH, X_WIDTH - i - 1, right_path);
+        if (bottom_path != -1) {
+            free(m->tiles[i][bottom_path]);
+            m->tiles[i][bottom_path] = create_tile(PATH, bottom_path, i);
+        }
+        if (top_path != -1) {
+            free(m->tiles[Y_WIDTH - i - 1][top_path]);
+            m->tiles[Y_WIDTH - i - 1][top_path] = create_tile(PATH, top_path, Y_WIDTH - i - 1);
+        }
+        if (left_path != -1) {
+            free(m->tiles[left_path][i]);
+            m->tiles[left_path][i] = create_tile(PATH, i, left_path);
+        }
+        if (right_path != -1) {
+            free(m->tiles[right_path][X_WIDTH - i - 1]);
+            m->tiles[right_path][X_WIDTH - i - 1] = create_tile(PATH, X_WIDTH - i - 1, right_path);
+        }
     }
 
     //Creates a path from the path entrance column or row to the vertical or horizontal cross
     if (left_greater == 1) {
         while (left_path != horizontal_path_row) {
+            free(m->tiles[left_path][3]);
             m->tiles[left_path][3] = create_tile(PATH, 3, left_path);
             left_path--;
         }
         while (right_path != horizontal_path_row) {
+            free(m->tiles[right_path][X_WIDTH-4]);
             m->tiles[right_path][X_WIDTH-4] = create_tile(PATH, X_WIDTH-4, right_path);
             right_path++;
         }
     } else if (left_greater == -1) {
         while (left_path != horizontal_path_row) {
+            free(m->tiles[left_path][3]);
             m->tiles[left_path][3] = create_tile(PATH, 3, left_path);
             left_path++;
         }
         while (right_path != horizontal_path_row) {
+            free(m->tiles[right_path][X_WIDTH-4]);
             m->tiles[right_path][X_WIDTH-4] = create_tile(PATH, X_WIDTH-4, right_path);
             right_path--;
         }
     }
     if (bottom_greater == 1) {
         while (bottom_path != vertical_path_col) {
+            free(m->tiles[3][bottom_path]);
             m->tiles[3][bottom_path] = create_tile(PATH, bottom_path, 3);
             bottom_path--;
         }
         while (top_path != vertical_path_col) {
+            free(m->tiles[Y_WIDTH-4][top_path]);
             m->tiles[Y_WIDTH-4][top_path] = create_tile(PATH, top_path, Y_WIDTH-4);
             top_path++;
         }
     } else if (bottom_greater == -1) {
         while (bottom_path != vertical_path_col) {
+            free(m->tiles[3][bottom_path]);
             m->tiles[3][bottom_path] = create_tile(PATH, bottom_path, 3);
             bottom_path++;
         }
         while (top_path != vertical_path_col) {
+            free(m->tiles[Y_WIDTH-4][top_path]);
             m->tiles[Y_WIDTH-4][top_path] = create_tile(PATH, top_path, Y_WIDTH-4);
             top_path--;
         }
@@ -103,11 +135,13 @@ void generate_path(GameMap* m, __int8_t top_path, __int8_t bottom_path, __int8_t
     i = left_path == -1 ? vertical_path_col : 3; //If there is not a left path, start at the vertical path col
     j = right_path == -1 ? vertical_path_col : X_WIDTH - 3; //If there is not a right path, end at the vertical path col
     for (; i < j; i++) {
+        free(m->tiles[horizontal_path_row][i]);
         m->tiles[horizontal_path_row][i] = create_tile(PATH, i, horizontal_path_row);
     }
     i = bottom_path == -1 ? horizontal_path_row : 3; //If there is not a bottom path, start at the horizontal path row
     j = top_path == -1 ? horizontal_path_row : Y_WIDTH - 3; //If there is not a top path, end at the horizontal path row
     for (; i < j; i++) {
+        free(m->tiles[i][vertical_path_col]);
         m->tiles[i][vertical_path_col] = create_tile(PATH, vertical_path_col, i);
     }
 
@@ -125,6 +159,11 @@ void generate_path(GameMap* m, __int8_t top_path, __int8_t bottom_path, __int8_t
         }
         i = vertical_path_col < (X_WIDTH / 2) ? 1 : -1;
 
+        free(m->tiles[pokicenter_val][vertical_path_col + (1 * i)]);
+        free(m->tiles[pokicenter_val][vertical_path_col + (2 * i)]);
+        free(m->tiles[pokicenter_val + 1][vertical_path_col + (1 * i)]);
+        free(m->tiles[pokicenter_val + 1][vertical_path_col + (2 * i)]);
+
         m->tiles[pokicenter_val][vertical_path_col + (1 * i)] = create_tile(PCNTR, vertical_path_col + (1 * i), pokicenter_val);
         m->tiles[pokicenter_val][vertical_path_col + (2 * i)] = create_tile(PCNTR, vertical_path_col + (2 * i), pokicenter_val);
         m->tiles[pokicenter_val + 1][vertical_path_col + (1 * i)] = create_tile(PCNTR, vertical_path_col + (1 * i), pokicenter_val + 1);
@@ -136,6 +175,11 @@ void generate_path(GameMap* m, __int8_t top_path, __int8_t bottom_path, __int8_t
             pokimart_val = 4 + rand() % (X_WIDTH - 4 - 6 + 1);
         }
         i = horizontal_path_row < (Y_WIDTH / 2) ? 1 : -1;
+
+        free(m->tiles[horizontal_path_row + (1 * i)][pokimart_val]);
+        free(m->tiles[horizontal_path_row + (1 * i)][pokimart_val + 1]);
+        free(m->tiles[horizontal_path_row + (2 * i)][pokimart_val]);
+        free(m->tiles[horizontal_path_row + (2 * i)][pokimart_val + 1]);
 
         m->tiles[horizontal_path_row + (1 * i)][pokimart_val] = create_tile(PMART, pokimart_val, horizontal_path_row + (1 * i));
         m->tiles[horizontal_path_row + (1 * i)][pokimart_val + 1] = create_tile(PMART, pokimart_val + 1, horizontal_path_row + (1 * i));

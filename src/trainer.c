@@ -6,25 +6,25 @@
 #include "map/movement.h"
 #include "config.h"
 
-int* get_pc_weights(int* weights) {
-    weights[BOULDER] = INT_MAX;
-    weights[TREE] = INT_MAX;
+unsigned int* get_pc_weights(unsigned int* weights) {
+    weights[BOULDER] = UINT_MAX;
+    weights[TREE] = UINT_MAX;
     weights[PATH] = 10;
     weights[PMART] = 10;
     weights[PCNTR] = 10;
     weights[TGRASS] = 20;
     weights[SGRASS] = 10;
-    weights[MOUNTAIN] = INT_MAX;
-    weights[FOREST] = INT_MAX;
-    weights[WATER] = INT_MAX;
+    weights[MOUNTAIN] = UINT_MAX;
+    weights[FOREST] = UINT_MAX;
+    weights[WATER] = UINT_MAX;
     weights[GATE] = 10;
 
     return weights;
 }
 
-int* get_hiker_weights(int* weights) {
-    weights[BOULDER] = INT_MAX;
-    weights[TREE] = INT_MAX;
+unsigned int* get_hiker_weights(unsigned int* weights) {
+    weights[BOULDER] = UINT_MAX;
+    weights[TREE] = UINT_MAX;
     weights[PATH] = 10;
     weights[PMART] = 50;
     weights[PCNTR] = 50;
@@ -32,56 +32,56 @@ int* get_hiker_weights(int* weights) {
     weights[SGRASS] = 10;
     weights[MOUNTAIN] = 15;
     weights[FOREST] = 15;
-    weights[WATER] = INT_MAX;
-    weights[GATE] = INT_MAX;
+    weights[WATER] = UINT_MAX;
+    weights[GATE] = UINT_MAX;
 
     return weights;
 }
 
-int* get_rival_weights(int* weights) {
-    weights[BOULDER] = INT_MAX;
-    weights[TREE] = INT_MAX;
+unsigned int* get_rival_weights(unsigned int* weights) {
+    weights[BOULDER] = UINT_MAX;
+    weights[TREE] = UINT_MAX;
     weights[PATH] = 10;
     weights[PMART] = 50;
     weights[PCNTR] = 50;
     weights[TGRASS] = 20;
     weights[SGRASS] = 10;
-    weights[MOUNTAIN] = INT_MAX;
-    weights[FOREST] = INT_MAX;
-    weights[WATER] = INT_MAX;
-    weights[GATE] = INT_MAX;
+    weights[MOUNTAIN] = UINT_MAX;
+    weights[FOREST] = UINT_MAX;
+    weights[WATER] = UINT_MAX;
+    weights[GATE] = UINT_MAX;
 
     return weights;
 }
 
-int* get_swimmer_weights(int* weights) {
-    weights[BOULDER] = INT_MAX;
-    weights[TREE] = INT_MAX;
-    weights[PATH] = INT_MAX;
-    weights[PMART] = INT_MAX;
-    weights[PCNTR] = INT_MAX;
-    weights[TGRASS] = INT_MAX;
-    weights[SGRASS] = INT_MAX;
-    weights[MOUNTAIN] = INT_MAX;
-    weights[FOREST] = INT_MAX;
+unsigned int* get_swimmer_weights(unsigned int* weights) {
+    weights[BOULDER] = UINT_MAX;
+    weights[TREE] = UINT_MAX;
+    weights[PATH] = UINT_MAX;
+    weights[PMART] = UINT_MAX;
+    weights[PCNTR] = UINT_MAX;
+    weights[TGRASS] = UINT_MAX;
+    weights[SGRASS] = UINT_MAX;
+    weights[MOUNTAIN] = UINT_MAX;
+    weights[FOREST] = UINT_MAX;
     weights[WATER] = 7;
-    weights[GATE] = INT_MAX;
+    weights[GATE] = UINT_MAX;
 
     return weights;
 }
 
-int* get_other_weights(int* weights) {
-    weights[BOULDER] = INT_MAX;
-    weights[TREE] = INT_MAX;
+unsigned int* get_other_weights(unsigned int* weights) {
+    weights[BOULDER] = UINT_MAX;
+    weights[TREE] = UINT_MAX;
     weights[PATH] = 10;
     weights[PMART] = 50;
     weights[PCNTR] = 50;
     weights[TGRASS] = 20;
     weights[SGRASS] = 10;
-    weights[MOUNTAIN] = INT_MAX;
-    weights[FOREST] = INT_MAX;
-    weights[WATER] = INT_MAX;
-    weights[GATE] = INT_MAX;
+    weights[MOUNTAIN] = UINT_MAX;
+    weights[FOREST] = UINT_MAX;
+    weights[WATER] = UINT_MAX;
+    weights[GATE] = UINT_MAX;
 
     return weights;
 }
@@ -92,6 +92,7 @@ Trainer* create_trainer(TrainerType type, int x, int y) {
     trainer->x = x;
     trainer->y = y;
     trainer->direction = rand() % NUM_DIRECTIONS;
+    trainer->is_defeated = 0;
 
     trainer->weights = malloc(sizeof(int) * NUM_TILES);
     get_trainer_weights(type, trainer->weights);
@@ -99,7 +100,7 @@ Trainer* create_trainer(TrainerType type, int x, int y) {
     return trainer;
 }
 
-int* get_trainer_weights(TrainerType type, int* result) {
+unsigned int* get_trainer_weights(TrainerType type, unsigned int* result) {
     switch (type) {
         case PC:
             get_pc_weights(result);
@@ -148,7 +149,6 @@ Trainer* add_hiker(GameMap* game_map, TrainerMap* trainer_map) {
 
     Trainer* trainer = create_trainer(HIKER, x, y);
     trainer_map->trainers[y][x] = trainer;
-    trainer_map->num_trainers++;
     return trainer;
 }
 
@@ -169,7 +169,6 @@ Trainer* add_rival(GameMap* game_map, TrainerMap* trainer_map) {
 
     Trainer* trainer = create_trainer(RIVAL, x, y);
     trainer_map->trainers[y][x] = trainer;
-    trainer_map->num_trainers++;
     return trainer;
 }
 
@@ -189,7 +188,6 @@ Trainer* add_swimmer(GameMap* game_map, TrainerMap* trainer_map) {
 
     Trainer* trainer = create_trainer(SWIMMER, x, y);
     trainer_map->trainers[y][x] = trainer;
-    trainer_map->num_trainers++;
     return trainer;
 }
 
@@ -210,7 +208,6 @@ Trainer* add_other(GameMap* game_map, TrainerType trainer_type, TrainerMap* trai
 
     Trainer* trainer = create_trainer(trainer_type, x, y);
     trainer_map->trainers[y][x] = trainer;
-    trainer_map->num_trainers++;
     return trainer;
 }
 
@@ -221,7 +218,7 @@ void add_trainer(TrainerType type, GameMap* game_map, TrainerMap* trainer_map) {
 
     int valid = 1;
     while (valid != 0) {
-        if (trainer_map->trainers[y][x] == NULL && game_map->tile_weight_maps[type][y][x] != INT_MAX) {
+        if (trainer_map->trainers[y][x] == NULL && game_map->tile_weight_maps[type][y][x] != UINT_MAX) {
             valid = 0;
         } else {
             x = rand() % (X_WIDTH - 2) + 1;
@@ -231,11 +228,10 @@ void add_trainer(TrainerType type, GameMap* game_map, TrainerMap* trainer_map) {
 
     trainer = create_trainer(type, x, y);
     trainer_map->trainers[y][x] = trainer;
-    trainer_map->num_trainers++;
     
     switch(type) {
         case PC:
-            exit(1);
+            exit(-1);
         case HIKER:
         case RIVAL:
         case SWIMMER:
@@ -248,7 +244,7 @@ void add_trainer(TrainerType type, GameMap* game_map, TrainerMap* trainer_map) {
             //Sentries don't move
             break;
         case NUM_TRAINERS:
-            exit(1);
+            exit(-1);
     }
 }
 
@@ -265,7 +261,6 @@ void add_trainers(GameMap* game_map, TrainerMap* trainer_map, int x, int y) {
             TrainerType type = trainer_types[rand() % 6];
             add_trainer(type, game_map, trainer_map);
         }
-        trainer_map->num_trainers++;
     }
 }
 
@@ -296,7 +291,7 @@ char get_trainer_char(TrainerType type) {
             return 'e';
             break;
         case NUM_TRAINERS:
-            exit(1);
+            exit(-1);
     }
     return '!'; //This should never happen
 }
@@ -330,7 +325,6 @@ void clear_trainer_map(TrainerMap* trainer_map) {
             trainer_map->trainers[i][j] = NULL;
         }
     }
-    trainer_map->num_trainers = 0;
 }
 
 void free_trainer(Trainer* trainer) {

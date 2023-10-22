@@ -3,4 +3,5 @@ This project creates the terrain for an ASCII character based Pokemon game. It u
 Running the `make` will create the proper binaries in a bin folder as well as a "run" binary in the main project folder. The game can be started by typing `./run` in the terminal.
 
 BUGS:
-    On borders, Pokimarts and Pokicenters sometimes generate off of the path
+    When repeatedly pressing movement keys in quick succession, the game will sometimes freeze. Most of this time
+    this is aleviated by waiting, but sometimes the game will then crash (rarely)

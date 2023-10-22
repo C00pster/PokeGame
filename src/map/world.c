@@ -6,6 +6,7 @@
 
 #include "map/world.h"
 #include "map/path.h"
+#include "map/movement.h"
 #include "dijkstra.h"
 #include "config.h"
 
@@ -48,7 +49,11 @@ void add_pc(World* world, int x, int y) {
         x_coor = world->maps[INDEX(y)][INDEX(x)]->vertical_path_col;
     }
 
-    world->trainer_map->trainers[y_coor][x_coor] = create_trainer(PC, x_coor, y_coor);
+    Trainer* pc = create_trainer(PC, x_coor, y_coor);
+
+    world->pc = pc;
+
+    add_trainer_to_movement_queue(pc, 0);
 
     generate_distance_maps(world, x, y, x_coor, y_coor);
 
@@ -57,8 +62,8 @@ void add_pc(World* world, int x, int y) {
 
 void generate_weight_maps(GameMap* game_map) {
     int i;
-    int tile_weights[NUM_TILES];
-    for (i = PC + 1; i < NUM_TRAINERS; i++) {
+    unsigned int tile_weights[NUM_TILES];
+    for (i = PC; i < NUM_TRAINERS; i++) {
         get_trainer_weights(i, tile_weights);
         generate_weight_map(game_map, tile_weights, i);
     }
@@ -81,6 +86,78 @@ void generate_map(World* world, int x, int y) {
     add_pc(world, x, y); //Also generates distance maps
 
     return;
+}
+
+int display_trainers(World* world, int world_x, int world_y, int pc_x, int pc_y) {
+    clear();
+    mvprintw(0, 0, "Trainers on this map:\n");
+    refresh();
+    char trainer_array[num_trainers][100];
+    int counter = 0;
+    for (int y = 0; y < Y_WIDTH; y++) {
+        for (int x = 0; x < X_WIDTH; x++) {
+            if (x == pc_x && y == pc_y) continue;
+            if (world->trainer_map->trainers[y][x] != NULL) {
+                int up_down_distance = world->trainer_map->trainers[y][x]->y - pc_y;
+                char* up_down_str;
+                if (up_down_distance >= 0) {
+                    up_down_str = "south";
+                } else {
+                    up_down_str = "north";
+                    up_down_distance *= -1;
+                }
+                int left_right_distance = world->trainer_map->trainers[y][x]->x - pc_x;
+                char* left_right_str;
+                if (left_right_distance >= 0) {
+                    left_right_str = "east";
+                } else {
+                    left_right_str = "west";
+                    left_right_distance *= -1;
+                }
+                sprintf(trainer_array[counter], "%c, %d %s and %d %s", get_trainer_char(world->trainer_map->trainers[y][x]->type), up_down_distance, up_down_str, left_right_distance, left_right_str);
+                counter++;
+            }
+        }
+    }
+
+    counter = 0;
+    while (counter < Y_WIDTH + 2 && counter < num_trainers){
+        mvprintw(counter + 1, 0, "%s", trainer_array[counter]);
+        counter++;
+        refresh();
+    }
+    refresh();
+
+    int input = 0;
+    while (input != 27) {
+        input = getch();
+        if (input == KEY_UP) {
+            if (counter <= Y_WIDTH + 2) {
+                continue;
+            } else {
+                move(Y_WIDTH + 2, 0);
+                deleteln();
+                move(1,0);
+                insertln();
+                mvprintw(1, 0, "%s", trainer_array[counter - (Y_WIDTH + 3)]);
+                counter--;
+                refresh();
+            }
+        }
+        if (input == KEY_DOWN) {
+            if (counter == num_trainers) {
+                continue;
+            } else {
+                move(1,0);
+                deleteln();
+                mvprintw(Y_WIDTH + 2, 0, "%s", trainer_array[counter]);
+                counter++;
+                refresh();
+            }
+        }
+    }
+    clear();
+    return 0;
 }
 
 World* create_world() {
@@ -111,13 +188,17 @@ World* create_world() {
     return world;
 }
 
-void print_map(World* world, int x, int y) {
+void print_map(World* world, int x, int y, int pc_x, int pc_y) {
     int i, j;
 
-    move(0,0);
+    move(1,0);
 
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
+            if (i == pc_x && j == pc_y) {
+                printw("%c", get_trainer_char(world->pc->type));
+                continue;
+            }
             if (world->trainer_map->trainers[j][i] != NULL) {
                 printw("%c", get_trainer_char(world->trainer_map->trainers[j][i]->type));
                 continue;

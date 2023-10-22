@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "data_structures/priority_queue.h"
 
 /*
@@ -30,6 +31,7 @@ PriorityQueue* create_priority_queue(int capacity, int (*compare)(void*, void*))
     priority_queue->size = 0;
     priority_queue->capacity = capacity;
     priority_queue->compare = compare;
+    memset(priority_queue->array, 0, sizeof(void*) * priority_queue->capacity);
     return priority_queue;
 }
 
@@ -43,15 +45,17 @@ void push(PriorityQueue* pq, void* item) {
             printf("Failed to resize priority queue");
             return;
         }
+        memset(new_array + pq->size, 0, sizeof(void*) * (pq->capacity - pq->size));
         pq->array = new_array;
     }
 
-    pq->array[pq->size++] = item;
+    pq->array[pq->size] = item;
+    pq->size++;
 
     int current_index = pq->size - 1;
     //Bubble up
     while (current_index > 0 && pq->compare(pq->array[current_index], pq->array[(current_index-1)/2]) < 0) {
-        swap_pointers(pq->array[current_index], pq->array[(current_index-1)/2]);
+        swap_pointers(&pq->array[current_index], &pq->array[(current_index-1)/2]);
         current_index = (current_index-1)/2;
     }
 }
@@ -60,7 +64,9 @@ void* pop(PriorityQueue* pq) {
     if (!pq || pq->size == 0) return NULL;
 
     void* result = pq->array[0];
-    pq->array[0] = pq->array[--pq->size];
+    pq->array[0] = pq->array[pq->size - 1];
+    pq->array[pq->size - 1] = NULL;
+    pq->size--;
 
     int current = 0;
     while (current * 2 + 1 < pq->size) {

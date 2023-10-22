@@ -5,7 +5,7 @@ typedef struct {
     int x, y;
 } Point;
 
-Point* create_point(__uint8_t x, __uint8_t y);
-Point* generate_point(__uint8_t x_min, __uint8_t x_max, __uint8_t y_min, __uint8_t y_max);
+Point* create_point(int x, int y);
+Point* generate_point(int x_min, int x_max, int y_min, int y_max);
 
 #endif // POINT_H

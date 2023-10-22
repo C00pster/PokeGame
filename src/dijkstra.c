@@ -75,7 +75,7 @@ void dijkstra(unsigned int startCol, unsigned int startRow, unsigned int** dista
 
 unsigned int** generate_distance_map(GameMap* game_map, int pc_x, int pc_y, TrainerType type) {
     int i, j;
-    int tile_weights[NUM_TILES];
+    unsigned int tile_weights[NUM_TILES];
     get_trainer_weights(type, tile_weights);
     unsigned int** distances = malloc(sizeof(int*) * Y_WIDTH);
     for (i = 0; i < Y_WIDTH; i++) {

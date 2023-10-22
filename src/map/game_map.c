@@ -77,10 +77,14 @@ GameMap* generate_regions(GameMap* game_map, TileType* starter_tile_types, __uin
 
     //Sets boulder border
     for (i = 0; i < X_WIDTH; i++) {
+        free(game_map->tiles[0][i]);
+        free(game_map->tiles[Y_WIDTH-1][i]);
         game_map->tiles[0][i] = create_tile(BOULDER, i, 0);
         game_map->tiles[Y_WIDTH-1][i] = create_tile(BOULDER, i, Y_WIDTH-1);
     }
     for (i = 1; i < Y_WIDTH - 1; i++) {
+        free(game_map->tiles[i][0]);
+        free(game_map->tiles[i][X_WIDTH-1]);
         game_map->tiles[i][0] = create_tile(BOULDER, 0, i);
         game_map->tiles[i][X_WIDTH-1] = create_tile(BOULDER, X_WIDTH-1, i);
     }
@@ -88,14 +92,14 @@ GameMap* generate_regions(GameMap* game_map, TileType* starter_tile_types, __uin
     //Fills map in from starter points
     while (q->size > 0) {
         Point* p = dequeue(q);
-        Tile* t = game_map->tiles[p->y][p->x];
+        TileType type = game_map->tiles[p->y][p->x]->type;
 
         for (j = -1; j <= 1; j++) {
             for (i = -2; i <= 2; i++) {
                 Point* new_point = create_point(p->x + i, p->y + j);
                 if (new_point->y > 0 && new_point->y < Y_WIDTH-1 && new_point->x > 0 && new_point->x < X_WIDTH - 1) {
                     if (!game_map->tiles[new_point->y][new_point->x]) {
-                        game_map->tiles[new_point->y][new_point->x] = create_tile(t->type, new_point->x, new_point->y);
+                        game_map->tiles[new_point->y][new_point->x] = create_tile(type, new_point->x, new_point->y);
                         enqueue(q, new_point);
                     }
                 }
@@ -123,7 +127,7 @@ GameMap* generate_game_map(__int8_t top_path, __int8_t bottom_path, __int8_t lef
     return m;
 }
 
-void generate_weight_map(GameMap* game_map, int* weights, int trainer_index) {
+void generate_weight_map(GameMap* game_map, unsigned int* weights, int trainer_index) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
@@ -137,7 +141,7 @@ void free_map(GameMap* game_map) {
     int i, j;
     for (j = 0; j < Y_WIDTH; j++) {
         for (i = 0; i < X_WIDTH; i++) {
-            free_tile(game_map->tiles[j][i]);
+            free(game_map->tiles[j][i]);
         }
         free(game_map->tiles[j]);
     }
