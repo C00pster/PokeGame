@@ -19,7 +19,7 @@ $(BINDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tgz: clean
-	tar cvzf Assignment1_Cooper-McKee.tgz --exclude=.vscode --exclude=.gitignore *
+	tar cvzf Assignment1.05-Cooper-McKee.tgz --exclude=.vscode --exclude=.gitignore --exclude=.git ../Cooper_McKee-Assignment1
 	
 clean:
 	rm -rf $(BINDIR) *.tgz run
