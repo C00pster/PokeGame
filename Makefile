@@ -1,27 +1,44 @@
 CC = gcc
-CFLAGS = -ggdb -Wall -Werror -lm -lncurses -Iinclude -MMD -MP
-SRCDIR = src
-BINDIR = bin
-TARGET = run
-SUBDIRS = . data_structures map
-SOURCES = $(foreach dir, $(SUBDIRS), $(wildcard $(SRCDIR)/$(dir)/*.c))
-OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%.o)
-HEADERS = $(SOURCES:$(SRCDIR)/%.c=$(SRCDIR)/%.h)
+CXX = g++
+ECHO = echo
+RM = rm -f
 
+TERM = "F2023"
 
-all: $(TARGET)
+CFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM)
+CXXFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM)
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@
+LDFLAGS = -lncurses
 
-$(BINDIR)/%.o: $(SRCDIR)/%.c
-	@mkdir -p $(@D)	#create the directory if it doesn't exist
-	$(CC) $(CFLAGS) -c $< -o $@
+BIN = poke327
+OBJS = poke327.o heap.o io.o character.o
 
-tgz: clean
-	tar cvzf Assignment1.05-Cooper-McKee.tgz --exclude=.vscode --exclude=.gitignore --exclude=.git ../Cooper_McKee-Assignment1
-	
+all: $(BIN) etags
+
+$(BIN): $(OBJS)
+	@$(ECHO) Linking $@
+	@$(CC) $^ -o $@ $(LDFLAGS)
+
+-include $(OBJS:.o=.d)
+
+%.o: %.c
+	@$(ECHO) Compiling $<
+	@$(CC) $(CFLAGS) -MMD -MF $*.d -c $<
+
+%.o: %.cpp
+	@$(ECHO) Compiling $<
+	@$(CXX) $(CXXFLAGS) -MMD -MF $*.d -c $<
+
+.PHONY: all clean clobber etags
+
 clean:
-	rm -rf $(BINDIR) *.tgz run
+	@$(ECHO) Removing all generated files
+	@$(RM) *.o $(BIN) *.d TAGS core vgcore.* gmon.out
 
--include $(DEPS)
+clobber: clean
+	@$(ECHO) Removing backup files
+	@$(RM) *~ \#* *pgm
+
+etags:
+	@$(ECHO) Updating TAGS
+	@etags *.[ch]
