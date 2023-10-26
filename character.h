@@ -45,8 +45,8 @@ typedef struct pc {
 /* character is defined in poke327.h to allow an instance of character
  * in world without including character.h in poke327.h                 */
 
-int32_t cmp_char_turns(const void *key, const void *with);
-void delete_character(void *v);
+int32_t cmp_char_turns(const character_t *key, const character_t *with);
+void delete_character(character_t *v);
 void pathfind(map_t *m);
 
 extern void (*move_func[num_movement_types])(character_t *, pair_t);

@@ -4,7 +4,7 @@
 # include <stdlib.h>
 # include <assert.h>
 
-# include "heap.h"
+# include "Heap.h"
 
 typedef struct character character_t;
 
@@ -86,11 +86,18 @@ typedef enum __attribute__ ((__packed__)) terrain_type {
   ter_debug
 } terrain_type_t;
 
+typedef struct path {
+  HeapNode<path> *hn;
+  uint8_t pos[2];
+  uint8_t from[2];
+  int32_t cost;
+} path_t;
+
 typedef struct map {
   terrain_type_t map[MAP_Y][MAP_X];
   uint8_t height[MAP_Y][MAP_X];
   character_t *cmap[MAP_Y][MAP_X];
-  heap_t turn;
+  Heap<character_t>* turn;
   int32_t num_trainers;
   int8_t n, s, e, w;
 } map_t;
@@ -132,13 +139,6 @@ extern pair_t all_dirs[8];
   dir[0] = all_dirs[_i][0]; \
   dir[1] = all_dirs[_i][1]; \
 }
-
-typedef struct path {
-  heap_node_t *hn;
-  uint8_t pos[2];
-  uint8_t from[2];
-  int32_t cost;
-} path_t;
 
 int new_map(int teleport);
 
