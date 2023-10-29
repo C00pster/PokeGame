@@ -102,19 +102,19 @@ static void io_print_message_queue(uint32_t y, uint32_t x)
  **************************************************************************/
 static int compare_trainer_distance(const void *v1, const void *v2)
 {
-  const character_t *const *c1 = static_cast<const character_t *const *>(v1);
-  const character_t *const *c2 = static_cast<const character_t *const *>(v2);
+  const Character *const *c1 = static_cast<const Character *const *>(v1);
+  const Character *const *c2 = static_cast<const Character *const *>(v2);
 
   return (world.rival_dist[(*c1)->pos[dim_y]][(*c1)->pos[dim_x]] -
           world.rival_dist[(*c2)->pos[dim_y]][(*c2)->pos[dim_x]]);
 }
 
-static character_t *io_nearest_visible_trainer()
+static Character *io_nearest_visible_trainer()
 {
-  character_t **c, *n;
+  Character **c, *n;
   uint32_t x, y, count;
 
-  c = (character_t**) malloc(world.cur_map->num_trainers * sizeof (*c));
+  c = (Character**) malloc(world.cur_map->num_trainers * sizeof (*c));
 
   /* Get a linear list of trainers */
   for (count = 0, y = 1; y < MAP_Y - 1; y++) {
@@ -139,7 +139,7 @@ static character_t *io_nearest_visible_trainer()
 void io_display()
 {
   uint32_t y, x;
-  character_t *c;
+  Character *c;
 
   clear();
   for (y = 0; y < MAP_Y; y++) {
@@ -246,7 +246,7 @@ void io_display()
   refresh();
 }
 
-uint32_t io_teleport_pc(pair_t dest)
+uint32_t io_teleport_pc(int16_t dest[2])
 {
   /* Just for fun. And debugging.  Mostly debugging. */
 
@@ -291,7 +291,7 @@ static void io_scroll_trainer_list(char (*s)[40], uint32_t count)
   }
 }
 
-static void io_list_trainers_display(character_t **c,
+static void io_list_trainers_display(Character **c,
                                      uint32_t count)
 {
   uint32_t i;
@@ -307,7 +307,7 @@ static void io_list_trainers_display(character_t **c,
 
   for (i = 0; i < count; i++) {
     snprintf(s[i], 40, "%16s %c: %2d %s by %2d %s",
-             char_type_name[c[i]->npc->ctype],
+             char_type_name[c[i]->ctype],
              c[i]->symbol,
              abs(c[i]->pos[dim_y] - world.pc.pos[dim_y]),
              ((c[i]->pos[dim_y] - world.pc.pos[dim_y]) <= 0 ?
@@ -339,10 +339,10 @@ static void io_list_trainers_display(character_t **c,
 
 static void io_list_trainers()
 {
-  character_t **c;
+  Character **c;
   uint32_t x, y, count;
 
-  c = (character**) malloc(world.cur_map->num_trainers * sizeof (*c));
+  c = (Character**) malloc(world.cur_map->num_trainers * sizeof (*c));
 
   /* Get a linear list of trainers */
   for (count = 0, y = 1; y < MAP_Y - 1; y++) {
@@ -379,27 +379,27 @@ void io_pokemon_center()
   getch();
 }
 
-void io_battle(character_t *aggressor, character_t *defender)
+void io_battle(Character *aggressor, Character *defender)
 {
-  character_t *npc;
+  NPC *npc;
 
   io_display();
   mvprintw(0, 0, "Aww, how'd you get so strong?  You and your pokemon must share a special bond!");
   refresh();
   getch();
-  if (aggressor->pc) {
-    npc = defender;
+  if (dynamic_cast<PC*>(aggressor)) {
+    npc = dynamic_cast<NPC*>(defender);
   } else {
-    npc = aggressor;
+    npc = dynamic_cast<NPC*>(aggressor);
   }
 
-  npc->npc->defeated = 1;
-  if (npc->npc->ctype == char_hiker || npc->npc->ctype == char_rival) {
-    npc->npc->mtype = move_wander;
+  npc->defeated = 1;
+  if (npc->ctype == char_hiker || npc->ctype == char_rival) {
+    npc->mtype = move_wander;
   }
 }
 
-uint32_t move_pc_dir(uint32_t input, pair_t dest)
+uint32_t move_pc_dir(uint32_t input, int16_t dest[2])
 {
   dest[dim_y] = world.pc.pos[dim_y];
   dest[dim_x] = world.pc.pos[dim_x];
@@ -448,16 +448,45 @@ uint32_t move_pc_dir(uint32_t input, pair_t dest)
   }
 
   if (world.cur_map->map[dest[dim_y]][dest[dim_x]] == ter_gate) {
-    /* Can't leave the map */  
-    return 1;
+    world.cur_map->cmap[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = NULL;
+    if (dest[dim_x] == 0) {
+      world.cur_idx[dim_x]--;
+      new_map(0);
+      dest[dim_x] = world.pc.pos[dim_x];
+      dest[dim_y] = world.pc.pos[dim_y];
+      return 0;
+    } else if (dest[dim_x] == MAP_X - 1) {
+      world.cur_idx[dim_x]++;
+      new_map(0);
+      dest[dim_x] = world.pc.pos[dim_x];
+      dest[dim_y] = world.pc.pos[dim_y];
+      return 0;
+    } else if (dest[dim_y] == 0) {
+      world.cur_idx[dim_y]--;
+      new_map(0);
+      dest[dim_x] = world.pc.pos[dim_x];
+      dest[dim_y] = world.pc.pos[dim_y];
+      return 0;
+    } else if (dest[dim_y] == MAP_Y - 1) {
+      world.cur_idx[dim_y]++;
+      new_map(0);
+      dest[dim_x] = world.pc.pos[dim_x];
+      dest[dim_y] = world.pc.pos[dim_y];
+      return 0;
+    } else {
+      world.cur_map->cmap[dest[dim_y]][dest[dim_x]] = &world.pc;
+    }
+  } else {
+    world.cur_map->cmap[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = NULL;
+    world.cur_map->cmap[dest[dim_y]][dest[dim_x]] = &world.pc;
   }
 
   if (world.cur_map->cmap[dest[dim_y]][dest[dim_x]]) {
-    if (world.cur_map->cmap[dest[dim_y]][dest[dim_x]]->npc &&
-        world.cur_map->cmap[dest[dim_y]][dest[dim_x]]->npc->defeated) {
+    if (dynamic_cast<NPC*>(world.cur_map->cmap[dest[dim_y]][dest[dim_x]]) &&
+        dynamic_cast<NPC*>(world.cur_map->cmap[dest[dim_y]][dest[dim_x]])->defeated) {
       // Some kind of greeting here would be nice
       return 1;
-    } else if (world.cur_map->cmap[dest[dim_y]][dest[dim_x]]->npc) {
+    } else if (dynamic_cast<NPC*>(world.cur_map->cmap[dest[dim_y]][dest[dim_x]])) {
       io_battle(&world.pc, world.cur_map->cmap[dest[dim_y]][dest[dim_x]]);
       // Not actually moving, so set dest back to PC position
       dest[dim_x] = world.pc.pos[dim_x];
@@ -473,7 +502,7 @@ uint32_t move_pc_dir(uint32_t input, pair_t dest)
   return 0;
 }
 
-void io_handle_input(pair_t dest)
+void io_handle_input(int16_t dest[2])
 {
   uint32_t turn_not_consumed;
   int key;

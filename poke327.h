@@ -4,9 +4,11 @@
 # include <stdlib.h>
 # include <assert.h>
 
-# include "Heap.h"
+# include "heap.h"
+# include "config.h"
+# include "character.h"
 
-typedef struct character character_t;
+// typedef struct character character_t;
 
 #define malloc(size) ({          \
   void *_tmp;                    \
@@ -23,14 +25,6 @@ typedef struct character character_t;
 # define rand_range(min, max) ((rand() % (((max) + 1) - (min))) + (min))
 
 # define UNUSED(f) ((void) f)
-
-typedef enum dim {
-  dim_x,
-  dim_y,
-  num_dims
-} dim_t;
-
-typedef int16_t pair_t[num_dims];
 
 #define MAP_X              80
 #define MAP_Y              21
@@ -70,69 +64,48 @@ typedef int16_t pair_t[num_dims];
 #define heightpair(pair) (m->height[pair[dim_y]][pair[dim_x]])
 #define heightxy(x, y) (m->height[y][x])
 
-typedef enum __attribute__ ((__packed__)) terrain_type {
-  ter_boulder,
-  ter_tree,
-  ter_path,
-  ter_mart,
-  ter_center,
-  ter_grass,
-  ter_clearing,
-  ter_mountain,
-  ter_forest,
-  ter_water,
-  ter_gate,
-  num_terrain_types,
-  ter_debug
-} terrain_type_t;
-
 typedef struct path {
-  HeapNode<path> *hn;
+  heap_node_t *hn;
   uint8_t pos[2];
   uint8_t from[2];
   int32_t cost;
 } path_t;
 
-typedef struct map {
-  terrain_type_t map[MAP_Y][MAP_X];
-  uint8_t height[MAP_Y][MAP_X];
-  character_t *cmap[MAP_Y][MAP_X];
-  Heap<character_t>* turn;
-  int32_t num_trainers;
-  int8_t n, s, e, w;
-} map_t;
+class Map {
+  public:
+    terrain_type_t map[MAP_Y][MAP_X];
+    uint8_t height[MAP_Y][MAP_X];
+    Character *cmap[MAP_Y][MAP_X];
+    heap_t *turn;
+    int32_t num_trainers;
+    int8_t n, s, e, w;
+    Map() {
+      this->turn = NULL;
+      this->num_trainers = 0;
+    };
+};
 
-typedef struct npc npc_t;
-typedef struct pc pc_t;
-/* Here instead of character.h to abvoid including character.h */
-typedef struct character {
-  npc_t *npc;
-  pc_t *pc;
-  pair_t pos;
-  char symbol;
-  int next_turn;
-  int seq_num;
-} character_t;
-
-typedef struct world {
-  map_t *world[WORLD_SIZE][WORLD_SIZE];
-  pair_t cur_idx;
-  map_t *cur_map;
-  /* Please distance maps in world, not map, since *
-   * we only need one pair at any given time.      */
-  int hiker_dist[MAP_Y][MAP_X];
-  int rival_dist[MAP_Y][MAP_X];
-  character_t pc;
-  int quit;
-  int add_trainer_prob;
-  int char_seq_num;
-} world_t;
+class World {
+  public:
+    Map *world[WORLD_SIZE][WORLD_SIZE];
+    int16_t cur_idx[2];
+    Map *cur_map;
+    /* Please distance maps in world, not map, since *
+     * we only need one pair at any given time.      */
+    int hiker_dist[MAP_Y][MAP_X];
+    int rival_dist[MAP_Y][MAP_X];
+    Character pc;
+    int quit;
+    int add_trainer_prob;
+    int char_seq_num;
+    World() {};
+};
 
 /* Even unallocated, a WORLD_SIZE x WORLD_SIZE array of pointers is a very *
  * large thing to put on the stack.  To avoid that, world is a global.     */
-extern world_t world;
+extern World world;
 
-extern pair_t all_dirs[8];
+extern int16_t all_dirs[8][2];
 
 #define rand_dir(dir) {     \
   int _i = rand() & 0x7;    \
