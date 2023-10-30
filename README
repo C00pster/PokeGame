@@ -1,7 +1,3 @@
 This project creates the terrain for an ASCII character based Pokemon game. It uses a queue data structure to generate points and build off of those points in a circle to generate the terrain. The roads and Pokecenter/Pokemarts are placed afterwards.
 
-Running the `make` will create the proper binaries in a bin folder as well as a "run" binary in the main project folder. The game can be started by typing `./run` in the terminal.
-
-BUGS:
-    When repeatedly pressing movement keys in quick succession, the game will sometimes freeze. Most of this time
-    this is aleviated by waiting, but sometimes the game will then crash (rarely)
+Running the `make` will create the proper binaries and the project can be run by typing './poke327'

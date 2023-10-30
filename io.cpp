@@ -476,9 +476,6 @@ uint32_t move_pc_dir(uint32_t input, int16_t dest[2])
     } else {
       world.cur_map->cmap[dest[dim_y]][dest[dim_x]] = &world.pc;
     }
-  } else {
-    world.cur_map->cmap[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = NULL;
-    world.cur_map->cmap[dest[dim_y]][dest[dim_x]] = &world.pc;
   }
 
   if (world.cur_map->cmap[dest[dim_y]][dest[dim_x]]) {
@@ -498,6 +495,9 @@ uint32_t move_pc_dir(uint32_t input, int16_t dest[2])
       DIJKSTRA_PATH_MAX) {
     return 1;
   }
+
+  world.cur_map->cmap[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = NULL;
+  world.cur_map->cmap[dest[dim_y]][dest[dim_x]] = &world.pc;
 
   return 0;
 }
