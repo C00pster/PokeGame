@@ -1,3 +1,13 @@
+10/29/2023 7:45p
+    Added pc movement across maps
+
+10/28/2023 7:00p
+    Added Character, NPC, PC, World, and Map classes
+
+10/25/2023 1:00p
+    Transitioned to provided solution 1.05
+    Began work on porting to CPP
+
 10/22/2023 6:45p
     Debugged pc movement
     Debugged character movement
