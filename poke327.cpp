@@ -697,7 +697,8 @@ static int place_boulders(map *m)
     x = rand() % (MAP_X - 2) + 1;
     if (m->map[y][x] != ter_forest &&
         m->map[y][x] != ter_path   &&
-        m->map[y][x] != ter_gate) {
+        m->map[y][x] != ter_gate   &&
+        m->map[y][x] != ter_bailey) {
       m->map[y][x] = ter_boulder;
     }
   }
@@ -716,7 +717,8 @@ static int place_trees(map *m)
     if (m->map[y][x] != ter_mountain &&
         m->map[y][x] != ter_path     &&
         m->map[y][x] != ter_water    &&
-        m->map[y][x] != ter_gate) {
+        m->map[y][x] != ter_gate     &&
+        m->map[y][x] != ter_bailey) {
       m->map[y][x] = ter_tree;
     }
   }

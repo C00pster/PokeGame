@@ -311,7 +311,7 @@ static void move_swimmer_func(character *c, pair_t dest)
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
 
-  if (is_adjacent(world.pc.pos, ter_water) &&
+  if (n->defeated != 1 && is_adjacent(world.pc.pos, ter_water) &&
       can_see(world.cur_map, c, &world.pc)) {
     /* PC is next to this body of water; swim to the PC */
 

@@ -1,5 +1,7 @@
 10/31/2023 1:30p
     Using provided 1.06 solution
+    Bug bounty identification and resolution of boulder/tree placement on paths
+        and swimmer pathfinding to PC after being defeated
 
 10/29/2023 7:45p
     Added pc movement across maps
