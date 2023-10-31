@@ -1,19 +1,17 @@
 #ifndef POKE327_H
 # define POKE327_H
 
-# include <stdlib.h>
-# include <assert.h>
+# include <cstdlib>
+# include <cassert>
 
 # include "heap.h"
-# include "config.h"
 # include "character.h"
+# include "pair.h"
 
-// typedef struct character character_t;
-
-#define malloc(size) ({          \
-  void *_tmp;                    \
-  assert((_tmp = malloc(size))); \
-  _tmp;                          \
+#define malloc(size) ({                 \
+  char *_tmp;                           \
+  assert(_tmp = (char *) malloc(size)); \
+  _tmp;                                 \
 })
 
 /* Returns true if random float in [0,1] is less than *
@@ -43,6 +41,7 @@
 #define FOREST_SYMBOL         '^'
 #define GATE_SYMBOL           '#'
 #define PATH_SYMBOL           '#'
+#define BAILEY_SYMBOL         '#'
 #define POKEMART_SYMBOL       'M'
 #define POKEMON_CENTER_SYMBOL 'C'
 #define TALL_GRASS_SYMBOL     ':'
@@ -64,48 +63,55 @@
 #define heightpair(pair) (m->height[pair[dim_y]][pair[dim_x]])
 #define heightxy(x, y) (m->height[y][x])
 
-typedef struct path {
-  heap_node_t *hn;
-  uint8_t pos[2];
-  uint8_t from[2];
-  int32_t cost;
-} path_t;
+typedef enum __attribute__ ((__packed__)) terrain_type {
+  ter_boulder,
+  ter_tree,
+  ter_path,
+  ter_mart,
+  ter_center,
+  ter_grass,
+  ter_clearing,
+  ter_mountain,
+  ter_forest,
+  ter_water,
+  ter_gate,
+  ter_bailey,
+  num_terrain_types,
+  ter_debug
+} terrain_type_t;
 
-class Map {
-  public:
-    terrain_type_t map[MAP_Y][MAP_X];
-    uint8_t height[MAP_Y][MAP_X];
-    Character *cmap[MAP_Y][MAP_X];
-    heap_t *turn;
-    int32_t num_trainers;
-    int8_t n, s, e, w;
-    Map() {
-      this->turn = NULL;
-      this->num_trainers = 0;
-    };
+extern int32_t move_cost[num_character_types][num_terrain_types];
+
+class map {
+ public:
+  terrain_type_t map[MAP_Y][MAP_X];
+  uint8_t height[MAP_Y][MAP_X];
+  character *cmap[MAP_Y][MAP_X];
+  heap_t turn;
+  int32_t num_trainers;
+  int8_t n, s, e, w;
 };
 
-class World {
-  public:
-    Map *world[WORLD_SIZE][WORLD_SIZE];
-    int16_t cur_idx[2];
-    Map *cur_map;
-    /* Please distance maps in world, not map, since *
-     * we only need one pair at any given time.      */
-    int hiker_dist[MAP_Y][MAP_X];
-    int rival_dist[MAP_Y][MAP_X];
-    Character pc;
-    int quit;
-    int add_trainer_prob;
-    int char_seq_num;
-    World() {};
+class world {
+ public:
+  map *world[WORLD_SIZE][WORLD_SIZE];
+  pair_t cur_idx;
+  map *cur_map;
+  /* Please distance maps in world, not map, since *
+   * we only need one pair at any given time.      */
+  int hiker_dist[MAP_Y][MAP_X];
+  int rival_dist[MAP_Y][MAP_X];
+  class pc pc;
+  int quit;
+  int add_trainer_prob;
+  int char_seq_num;
 };
 
 /* Even unallocated, a WORLD_SIZE x WORLD_SIZE array of pointers is a very *
  * large thing to put on the stack.  To avoid that, world is a global.     */
-extern World world;
+extern class world world;
 
-extern int16_t all_dirs[8][2];
+extern pair_t all_dirs[8];
 
 #define rand_dir(dir) {     \
   int _i = rand() & 0x7;    \
@@ -113,6 +119,14 @@ extern int16_t all_dirs[8][2];
   dir[1] = all_dirs[_i][1]; \
 }
 
+typedef struct path {
+  heap_node_t *hn;
+  uint8_t pos[2];
+  uint8_t from[2];
+  int32_t cost;
+} path_t;
+
 int new_map(int teleport);
+void pathfind(map *m);
 
 #endif

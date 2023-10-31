@@ -1,5 +1,4 @@
-#include <limits.h>
-#include <cstdint>
+#include <climits>
 
 #include "character.h"
 #include "poke327.h"
@@ -12,12 +11,12 @@
  * or adjacent to water are bridges.  They can't have inifinite     *
  * movement cost, or it throws a wrench into the turn queue.        */
 int32_t move_cost[num_character_types][num_terrain_types] = {
-//  boulder,tree,path,mart,center,grass,clearing,mountain,forest,water,gate
-  { PM, PM, 10, 10, 10, 20, 10, PM, PM, PM, 10 },
-  { PM, PM, 10, 50, 50, 15, 10, 15, 15, PM, PM },
-  { PM, PM, 10, 50, 50, 20, 10, PM, PM, PM, PM },
-  { PM, PM,  7, PM, PM, PM, PM, PM, PM,  7, PM },
-  { PM, PM, 10, 50, 50, 20, 10, PM, PM, PM, PM },
+//  boulder,tree,path,mart,center,grass,clearing,mountain,forest,water,gate,bailey
+  { PM, PM, 10, 10, 10, 20, 10, PM, PM, PM, 10, 10 },
+  { PM, PM, 10, 50, 50, 15, 10, 15, 15, PM, PM, 50 },
+  { PM, PM, 10, 50, 50, 20, 10, PM, PM, PM, PM, 50 },
+  { PM, PM,  7, PM, PM, PM, PM, PM, PM,  7, PM, PM },
+  { PM, PM, 10, 50, 50, 20, 10, PM, PM, PM, PM, 50 },
 };
 #undef PM
 
@@ -27,14 +26,6 @@ const char *char_type_name[num_character_types] = {
   "Rival",
   "Swimmer",
   "Trainer"
-};
-
-const char char_type_symbol[num_character_types] = {
-  '@',
-  'h',
-  'r',
-  'm',
-  'o'
 };
 
 #define is_adjacent(pos, ter)                                \
@@ -47,8 +38,12 @@ const char char_type_symbol[num_character_types] = {
    (world.cur_map->map[pos[dim_y] + 1][pos[dim_x]    ] == ter) || \
    (world.cur_map->map[pos[dim_y] + 1][pos[dim_x] + 1] == ter))
 
+bool is_pc(character *c)
+{
+  return c == &world.pc;
+}
 
-uint32_t can_see(Map *m, Character *voyeur, Character *exhibitionist)
+uint32_t can_see(map *m, character *voyeur, character *exhibitionist)
 {
   /* Application of Bresenham's Line Drawing Algorithm.  If we can draw a   *
    * line from v to e without intersecting any foreign terrain, then v can  *
@@ -62,8 +57,8 @@ uint32_t can_see(Map *m, Character *voyeur, Character *exhibitionist)
    * the PC adjacent to water or on a bridge?  v is always a swimmer, and e *
    * is always the player character.                                        */
 
-  int16_t first[2], second[2];
-  int16_t del[2], f[2];
+  pair_t first, second;
+  pair_t del, f;
   int16_t a, b, c, i;
 
   first[dim_x] = voyeur->pos[dim_x];
@@ -92,7 +87,8 @@ uint32_t can_see(Map *m, Character *voyeur, Character *exhibitionist)
     c = a - del[dim_x];
     b = c - del[dim_x];
     for (i = 0; i <= del[dim_x]; i++) {
-      if (((mappair(first) != ter_water) && (mappair(first) != ter_path)) && i && (i != del[dim_x])) {
+      if (((mappair(first) != ter_water) && (mappair(first) != ter_path)) &&
+          i && (i != del[dim_x])) {
         return 0;
       }
       first[dim_x] += f[dim_x];
@@ -109,7 +105,8 @@ uint32_t can_see(Map *m, Character *voyeur, Character *exhibitionist)
     c = a - del[dim_y];
     b = c - del[dim_y];
     for (i = 0; i <= del[dim_y]; i++) {
-      if (((mappair(first) != ter_water) && (mappair(first) != ter_path)) && i && (i != del[dim_y])) {
+      if (((mappair(first) != ter_water) && (mappair(first) != ter_path)) &&
+          i && (i != del[dim_y])) {
         return 0;
       }
       first[dim_y] += f[dim_y];
@@ -126,7 +123,7 @@ uint32_t can_see(Map *m, Character *voyeur, Character *exhibitionist)
   return 1;
 }
 
-static void move_hiker_func(Character *c, int16_t dest[2])
+static void move_hiker_func(character *c, pair_t dest)
 {
   int min;
   int base;
@@ -140,7 +137,8 @@ static void move_hiker_func(Character *c, int16_t dest[2])
   
   for (i = base; i < 8 + base; i++) {
     if ((world.hiker_dist[c->pos[dim_y] + all_dirs[i & 0x7][dim_y]]
-                         [c->pos[dim_x] + all_dirs[i & 0x7][dim_x]] <= min) &&
+                         [c->pos[dim_x] + all_dirs[i & 0x7][dim_x]] <=
+         min) &&
         !world.cur_map->cmap[c->pos[dim_y] + all_dirs[i & 0x7][dim_y]]
                             [c->pos[dim_x] + all_dirs[i & 0x7][dim_x]] &&
         c->pos[dim_x] + all_dirs[i & 0x7][dim_x] != 0 &&
@@ -159,7 +157,7 @@ static void move_hiker_func(Character *c, int16_t dest[2])
   }
 }
 
-static void move_rival_func(Character *c, int16_t dest[2])
+static void move_rival_func(character *c, pair_t dest)
 {
   int min;
   int base;
@@ -193,114 +191,122 @@ static void move_rival_func(Character *c, int16_t dest[2])
   }
 }
 
-static void move_pacer_func(Character *c, int16_t dest[2])
+static void move_pacer_func(character *c, pair_t dest)
 {
-  NPC* npc = dynamic_cast<NPC*>(c);
   terrain_type_t t;
+  npc *n = dynamic_cast<npc *> (c);
   
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
 
-  if (!npc->defeated &&
-      world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]] == &world.pc) {
+  if (!n->defeated &&
+      world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]] ==
+      &world.pc) {
       io_battle(c, &world.pc);
       return;
   }
 
-  t = world.cur_map->map[c->pos[dim_y] + npc->dir[dim_y]][c->pos[dim_x] + npc->dir[dim_x]];
+  t = world.cur_map->map[c->pos[dim_y] + n->dir[dim_y]]
+                        [c->pos[dim_x] + n->dir[dim_x]];
 
   if ((t != ter_path && t != ter_grass && t != ter_clearing) ||
-      world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]]) {
-    npc->dir[dim_x] *= -1;
-    npc->dir[dim_y] *= -1;
+      world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]]) {
+    n->dir[dim_x] *= -1;
+    n->dir[dim_y] *= -1;
   }
 
   if ((t == ter_path || t == ter_grass || t == ter_clearing) &&
-      !world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                          [c->pos[dim_x] + npc->dir[dim_x]]) {
-    dest[dim_x] = c->pos[dim_x] + npc->dir[dim_x];
-    dest[dim_y] = c->pos[dim_y] + npc->dir[dim_y];
+      !world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                          [c->pos[dim_x] + n->dir[dim_x]]) {
+    dest[dim_x] = c->pos[dim_x] + n->dir[dim_x];
+    dest[dim_y] = c->pos[dim_y] + n->dir[dim_y];
   }
 }
 
-static void move_wanderer_func(Character *c, int16_t dest[2])
+static void move_wanderer_func(character *c, pair_t dest)
 {
-  NPC* npc = dynamic_cast<NPC*>(c);
+  npc *n = dynamic_cast<npc *> (c);
+
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
 
-  if (!npc->defeated &&
-      world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]] == &world.pc) {
+  if (!n->defeated &&
+      world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]] ==
+      &world.pc) {
       io_battle(c, &world.pc);
       return;
   }
 
-  if ((world.cur_map->map[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]] !=
+  if ((world.cur_map->map[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]] !=
        world.cur_map->map[c->pos[dim_y]][c->pos[dim_x]]) ||
-      world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]]) {
-    rand_dir(npc->dir);
+      world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]]) {
+    rand_dir(n->dir);
   }
 
-  if ((world.cur_map->map[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]] ==
+  if ((world.cur_map->map[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]] ==
        world.cur_map->map[c->pos[dim_y]][c->pos[dim_x]]) &&
-      !world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                          [c->pos[dim_x] + npc->dir[dim_x]]) {
-    dest[dim_x] = c->pos[dim_x] + npc->dir[dim_x];
-    dest[dim_y] = c->pos[dim_y] + npc->dir[dim_y];
+      !world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                          [c->pos[dim_x] + n->dir[dim_x]]) {
+    dest[dim_x] = c->pos[dim_x] + n->dir[dim_x];
+    dest[dim_y] = c->pos[dim_y] + n->dir[dim_y];
   }
 }
 
-static void move_sentry_func(Character *c, int16_t dest[2])
+static void move_sentry_func(character *c, pair_t dest)
 {
   // Not a bug.  Sentries are non-aggro.
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
 }
 
-static void move_explorer_func(Character *c, int16_t dest[2])
+static void move_explorer_func(character *c, pair_t dest)
 {
-  NPC* npc = dynamic_cast<NPC*>(c);
+  npc *n = dynamic_cast<npc *> (c);
+
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
 
-  if (!npc->defeated &&
-      world.cur_map->cmap[c->pos[dim_y] + npc->dir[dim_y]]
-                         [c->pos[dim_x] + npc->dir[dim_x]] == &world.pc) {
+  if (!n->defeated &&
+      world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                         [c->pos[dim_x] + n->dir[dim_x]] ==
+      &world.pc) {
       io_battle(c, &world.pc);
       return;
   }
 
-  if ((move_cost[char_other][world.cur_map->map[npc->pos[dim_y] +
-                                                npc->dir[dim_y]]
-                                               [npc->pos[dim_x] +
-                                                npc->dir[dim_x]]] == DIJKSTRA_PATH_MAX) || 
-                            (world.cur_map->cmap[npc->pos[dim_y] + npc->dir[dim_y]][c->pos[dim_x] + npc->dir[dim_x]])) {
-    rand_dir(npc->dir);
+  if ((move_cost[char_other][world.cur_map->map[c->pos[dim_y] +
+                                                n->dir[dim_y]]
+                                               [c->pos[dim_x] +
+                                                n->dir[dim_x]]] ==
+       DIJKSTRA_PATH_MAX) || (world.cur_map->cmap[c->pos[dim_y] +
+                                                  n->dir[dim_y]]
+                              [c->pos[dim_x] + n->dir[dim_x]])) {
+    rand_dir(n->dir);
   }
 
-  if ((move_cost[char_other][world.cur_map->map[npc->pos[dim_y] +
-                                                npc->dir[dim_y]]
-                                               [npc->pos[dim_x] +
-                                                npc->dir[dim_x]]] !=
+  if ((move_cost[char_other][world.cur_map->map[c->pos[dim_y] +
+                                                n->dir[dim_y]]
+                                               [c->pos[dim_x] +
+                                                n->dir[dim_x]]] !=
        DIJKSTRA_PATH_MAX) &&
-      !world.cur_map->cmap[npc->pos[dim_y] + npc->dir[dim_y]]
-                          [npc->pos[dim_x] + npc->dir[dim_x]]) {
-    dest[dim_x] = npc->pos[dim_x] + npc->dir[dim_x];
-    dest[dim_y] = npc->pos[dim_y] + npc->dir[dim_y];
+      !world.cur_map->cmap[c->pos[dim_y] + n->dir[dim_y]]
+                          [c->pos[dim_x] + n->dir[dim_x]]) {
+    dest[dim_x] = c->pos[dim_x] + n->dir[dim_x];
+    dest[dim_y] = c->pos[dim_y] + n->dir[dim_y];
   }
 }
 
-static void move_swimmer_func(Character *c, int16_t dest[2])
+static void move_swimmer_func(character *c, pair_t dest)
 {
-  NPC* npc = dynamic_cast<NPC*>(c);
-  Map *m = world.cur_map;
-  int16_t dir[2]; 
+  map *m = world.cur_map;
+  pair_t dir; 
+  npc *n = dynamic_cast<npc *> (c);
 
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
@@ -322,35 +328,35 @@ static void move_swimmer_func(Character *c, int16_t dest[2])
                [dest[dim_x] + dir[dim_x]] == ter_water) ||
         ((m->map[dest[dim_y] + dir[dim_y]]
                 [dest[dim_x] + dir[dim_x]] == ter_path) &&
-         is_adjacent(((int16_t[2]){ static_cast<int16_t>(dest[dim_x] + dir[dim_x]),
-                                static_cast<int16_t>(dest[dim_y] + dir[dim_y]) }), 
-                        ter_water))) {
+         is_adjacent(((pair_t){ (int16_t) (dest[dim_x] + dir[dim_x]),
+                               (int16_t) (dest[dim_y] + dir[dim_y]) }),
+           ter_water))) {
       dest[dim_x] += dir[dim_x];
       dest[dim_y] += dir[dim_y];
     } else if ((m->map[dest[dim_y]][dest[dim_x] + dir[dim_x]] == ter_water) ||
                ((m->map[dest[dim_y]][dest[dim_x] + dir[dim_x]] == ter_path) &&
-                is_adjacent(((int16_t[2]){ static_cast<int16_t>(dest[dim_x] + dir[dim_x]),
-                                       static_cast<int16_t>(dest[dim_y] + dir[dim_y]) }), 
-                              ter_water))) {
+                is_adjacent(((pair_t){ (int16_t) (dest[dim_x] + dir[dim_x]),
+                                       (int16_t) (dest[dim_y]) }),
+                  ter_water))) {
       dest[dim_x] += dir[dim_x];
     } else if ((m->map[dest[dim_y] + dir[dim_y]][dest[dim_x]] == ter_water) ||
                ((m->map[dest[dim_y] + dir[dim_y]][dest[dim_x]] == ter_path) &&
-                is_adjacent(((int16_t[2]){ static_cast<int16_t>(dest[dim_x]),
-                                       static_cast<int16_t>(dest[dim_y] + dir[dim_y]) }),
-                              ter_water))) {
+                is_adjacent(((pair_t){ (int16_t) (dest[dim_x]),
+                                       (int16_t) (dest[dim_y] + dir[dim_y]) }),
+                            ter_water))) {
       dest[dim_y] += dir[dim_y];
     }
   } else {
     /* PC is elsewhere.  Keep doing laps. */
-    dir[dim_x] = npc->dir[dim_x];
-    dir[dim_y] = npc->dir[dim_y];
+    dir[dim_x] = n->dir[dim_x];
+    dir[dim_y] = n->dir[dim_y];
     if ((m->map[dest[dim_y] + dir[dim_y]]
                     [dest[dim_x] + dir[dim_x]] != ter_water) ||
         !((m->map[dest[dim_y] + dir[dim_y]]
                  [dest[dim_x] + dir[dim_x]] == ter_path) &&
-          is_adjacent(((int16_t[2]) { static_cast<int16_t>(dest[dim_x] + dir[dim_x]),
-                                  static_cast<int16_t>(dest[dim_y] + dir[dim_y]) }), 
-                          ter_water))) {
+          is_adjacent(((pair_t) { (int16_t) (dest[dim_x] + dir[dim_x]),
+                                  (int16_t) (dest[dim_y] + dir[dim_y]) }),
+            ter_water))) {
       rand_dir(dir);
     }
 
@@ -358,9 +364,9 @@ static void move_swimmer_func(Character *c, int16_t dest[2])
                     [dest[dim_x] + dir[dim_x]] == ter_water) ||
         ((m->map[dest[dim_y] + dir[dim_y]]
                 [dest[dim_x] + dir[dim_x]] == ter_path) &&
-         is_adjacent(((int16_t[2]) { static_cast<int16_t>(dest[dim_x] + dir[dim_x]),
-                                 static_cast<int16_t>(dest[dim_y] + dir[dim_y]) }), 
-                        ter_water))) {
+         is_adjacent(((pair_t) { (int16_t) (dest[dim_x] + dir[dim_x]),
+                                 (int16_t) (dest[dim_y] + dir[dim_y]) }),
+           ter_water))) {
       dest[dim_x] += dir[dim_x];
       dest[dim_y] += dir[dim_y];
     }
@@ -373,13 +379,13 @@ static void move_swimmer_func(Character *c, int16_t dest[2])
   }
 }
 
-static void move_pc_func(Character *c, int16_t dest[2])
+static void move_pc_func(character *c, pair_t dest)
 {
   io_display();
   io_handle_input(dest);
 }
 
-void (*move_func[num_movement_types])(Character *, int16_t[2]) = {
+void (*move_func[num_movement_types])(character *, pair_t) = {
   move_hiker_func,
   move_rival_func,
   move_pacer_func,
@@ -392,20 +398,18 @@ void (*move_func[num_movement_types])(Character *, int16_t[2]) = {
 
 int32_t cmp_char_turns(const void *key, const void *with)
 {
-  return ((((Character *) key)->next_turn ==
-           ((Character *) with)->next_turn)  ?
-          (((Character *) key)->seq_num -
-           ((Character *) with)->seq_num)    :
-          (((Character *) key)->next_turn -
-           ((Character *) with)->next_turn));
+  return ((((character *) key)->next_turn ==
+           ((character *) with)->next_turn)  ?
+          (((character *) key)->seq_num -
+           ((character *) with)->seq_num)    :
+          (((character *) key)->next_turn -
+           ((character *) with)->next_turn));
 }
 
 void delete_character(void *v)
 {
-  if (v == &world.pc) {
-    delete ((Character*) v);
-  } else {
-    delete ((Character*) v);
+  if (v != &world.pc) {
+    delete (character *) v;
   }
 }
 
@@ -425,15 +429,15 @@ static int32_t rival_cmp(const void *key, const void *with) {
                           [((path_t *) with)->pos[dim_x]]);
 }
 
-void pathfind(Map *m)
+void pathfind(map *m)
 {
-  heap_t h = *(new heap_t);
-  uint32_t x, y;
+  heap_t h;
+  uint16_t x, y;
   static path_t p[MAP_Y][MAP_X], *c;
-  static bool initialized = false;
+  static uint32_t initialized = 0;
 
   if (!initialized) {
-    initialized = true;
+    initialized = 1;
     for (y = 0; y < MAP_Y; y++) {
       for (x = 0; x < MAP_X; x++) {
         p[y][x].pos[dim_y] = y;
@@ -447,15 +451,19 @@ void pathfind(Map *m)
       world.hiker_dist[y][x] = world.rival_dist[y][x] = DIJKSTRA_PATH_MAX;
     }
   }
-  world.hiker_dist[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = world.rival_dist[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = 0;
+  
+  world.hiker_dist[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = 
+    world.rival_dist[world.pc.pos[dim_y]][world.pc.pos[dim_x]] = 0;
 
   heap_init(&h, hiker_cmp, NULL);
 
   for (y = 1; y < MAP_Y - 1; y++) {
     for (x = 1; x < MAP_X - 1; x++) {
-      int tmp = ter_cost(x, y, char_hiker);
-      // if (ter_cost(x, y, char_hiker) != DIJKSTRA_PATH_MAX) {
-      if (tmp != DIJKSTRA_PATH_MAX) {
+      /*
+      if ((ter_cost(x, y, char_hiker) != DIJKSTRA_PATH_MAX) ||
+          ((x == world.pc.pos[dim_x]) && (y == world.pc.pos[dim_y]))) {
+      */
+      if (ter_cost(x, y, char_hiker) != DIJKSTRA_PATH_MAX) {
         p[y][x].hn = heap_insert(&h, &p[y][x]);
       } else {
         p[y][x].hn = NULL;
@@ -463,14 +471,17 @@ void pathfind(Map *m)
     }
   }
 
-  while ((c = (path_t*) heap_remove_min(&h))) {
+  while ((c = (path_t *) heap_remove_min(&h))) {
     c->hn = NULL;
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn) &&
         (world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x] - 1] >
          world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
          ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker))) {
-      world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x] - 1] = world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] + ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn);
+      world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x] - 1] =
+        world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
+        ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn);
     }
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x]    ].hn) &&
         (world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x]    ] >
@@ -479,7 +490,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x]    ] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] - 1][c->pos[dim_x]    ].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] - 1][c->pos[dim_x]    ].hn);
     }
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x] + 1].hn) &&
         (world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x] + 1] >
@@ -488,7 +500,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y] - 1][c->pos[dim_x] + 1] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] - 1][c->pos[dim_x] + 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] - 1][c->pos[dim_x] + 1].hn);
     }
     if ((p[c->pos[dim_y]    ][c->pos[dim_x] - 1].hn) &&
         (world.hiker_dist[c->pos[dim_y]    ][c->pos[dim_x] - 1] >
@@ -497,7 +510,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y]    ][c->pos[dim_x] - 1] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y]    ][c->pos[dim_x] - 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y]    ][c->pos[dim_x] - 1].hn);
     }
     if ((p[c->pos[dim_y]    ][c->pos[dim_x] + 1].hn) &&
         (world.hiker_dist[c->pos[dim_y]    ][c->pos[dim_x] + 1] >
@@ -506,7 +520,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y]    ][c->pos[dim_x] + 1] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y]    ][c->pos[dim_x] + 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y]    ][c->pos[dim_x] + 1].hn);
     }
     if ((p[c->pos[dim_y] + 1][c->pos[dim_x] - 1].hn) &&
         (world.hiker_dist[c->pos[dim_y] + 1][c->pos[dim_x] - 1] >
@@ -515,7 +530,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y] + 1][c->pos[dim_x] - 1] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] + 1][c->pos[dim_x] - 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] + 1][c->pos[dim_x] - 1].hn);
     }
     if ((p[c->pos[dim_y] + 1][c->pos[dim_x]    ].hn) &&
         (world.hiker_dist[c->pos[dim_y] + 1][c->pos[dim_x]    ] >
@@ -524,7 +540,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y] + 1][c->pos[dim_x]    ] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] + 1][c->pos[dim_x]    ].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] + 1][c->pos[dim_x]    ].hn);
     }
     if ((p[c->pos[dim_y] + 1][c->pos[dim_x] + 1].hn) &&
         (world.hiker_dist[c->pos[dim_y] + 1][c->pos[dim_x] + 1] >
@@ -533,7 +550,8 @@ void pathfind(Map *m)
       world.hiker_dist[c->pos[dim_y] + 1][c->pos[dim_x] + 1] =
         world.hiker_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_hiker);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] + 1][c->pos[dim_x] + 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] + 1][c->pos[dim_x] + 1].hn);
     }
   }
   heap_delete(&h);
@@ -542,6 +560,10 @@ void pathfind(Map *m)
 
   for (y = 1; y < MAP_Y - 1; y++) {
     for (x = 1; x < MAP_X - 1; x++) {
+      /*
+      if ((ter_cost(x, y, char_rival) != DIJKSTRA_PATH_MAX) ||
+          ((x == world.pc.pos[dim_x]) && (y == world.pc.pos[dim_y]))) {
+      */
       if (ter_cost(x, y, char_rival) != DIJKSTRA_PATH_MAX) {
         p[y][x].hn = heap_insert(&h, &p[y][x]);
       } else {
@@ -550,7 +572,7 @@ void pathfind(Map *m)
     }
   }
 
-  while ((c = (path_t*) heap_remove_min(&h))) {
+  while ((c = (path_t *) heap_remove_min(&h))) {
     c->hn = NULL;
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn) &&
         (world.rival_dist[c->pos[dim_y] - 1][c->pos[dim_x] - 1] >
@@ -559,7 +581,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y] - 1][c->pos[dim_x] - 1] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn);
     }
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x]    ].hn) &&
         (world.rival_dist[c->pos[dim_y] - 1][c->pos[dim_x]    ] >
@@ -568,7 +591,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y] - 1][c->pos[dim_x]    ] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] - 1][c->pos[dim_x]    ].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] - 1][c->pos[dim_x]    ].hn);
     }
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x] + 1].hn) &&
         (world.rival_dist[c->pos[dim_y] - 1][c->pos[dim_x] + 1] >
@@ -577,7 +601,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y] - 1][c->pos[dim_x] + 1] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] - 1][c->pos[dim_x] + 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] - 1][c->pos[dim_x] + 1].hn);
     }
     if ((p[c->pos[dim_y]    ][c->pos[dim_x] - 1].hn) &&
         (world.rival_dist[c->pos[dim_y]    ][c->pos[dim_x] - 1] >
@@ -586,7 +611,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y]    ][c->pos[dim_x] - 1] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y]    ][c->pos[dim_x] - 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y]    ][c->pos[dim_x] - 1].hn);
     }
     if ((p[c->pos[dim_y]    ][c->pos[dim_x] + 1].hn) &&
         (world.rival_dist[c->pos[dim_y]    ][c->pos[dim_x] + 1] >
@@ -595,7 +621,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y]    ][c->pos[dim_x] + 1] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y]    ][c->pos[dim_x] + 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y]    ][c->pos[dim_x] + 1].hn);
     }
     if ((p[c->pos[dim_y] + 1][c->pos[dim_x] - 1].hn) &&
         (world.rival_dist[c->pos[dim_y] + 1][c->pos[dim_x] - 1] >
@@ -604,7 +631,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y] + 1][c->pos[dim_x] - 1] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] + 1][c->pos[dim_x] - 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] + 1][c->pos[dim_x] - 1].hn);
     }
     if ((p[c->pos[dim_y] + 1][c->pos[dim_x]    ].hn) &&
         (world.rival_dist[c->pos[dim_y] + 1][c->pos[dim_x]    ] >
@@ -613,7 +641,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y] + 1][c->pos[dim_x]    ] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] + 1][c->pos[dim_x]    ].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] + 1][c->pos[dim_x]    ].hn);
     }
     if ((p[c->pos[dim_y] + 1][c->pos[dim_x] + 1].hn) &&
         (world.rival_dist[c->pos[dim_y] + 1][c->pos[dim_x] + 1] >
@@ -622,7 +651,8 @@ void pathfind(Map *m)
       world.rival_dist[c->pos[dim_y] + 1][c->pos[dim_x] + 1] =
         world.rival_dist[c->pos[dim_y]][c->pos[dim_x]] +
         ter_cost(c->pos[dim_x], c->pos[dim_y], char_rival);
-      heap_decrease_key_no_replace(&h, p[c->pos[dim_y] + 1][c->pos[dim_x] + 1].hn);
+      heap_decrease_key_no_replace(&h,
+                                   p[c->pos[dim_y] + 1][c->pos[dim_x] + 1].hn);
     }
   }
   heap_delete(&h);
