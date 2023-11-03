@@ -1176,7 +1176,16 @@ int main(int argc, char *argv[])
           usage(argv[0]);
         }
       } else { /* No dash */
-        usage(argv[0]);
+        if (!strcmp(argv[i], "pokemon")) return io_parse_csv(pokemon);
+        if (!strcmp(argv[i], "moves")) return io_parse_csv(moves);
+        if (!strcmp(argv[i], "pokemon_moves")) return io_parse_csv(pokemon_moves);
+        if (!strcmp(argv[i], "pokemon_species")) return io_parse_csv(pokemon_species);
+        if (!strcmp(argv[i], "experience")) return io_parse_csv(experience);
+        if (!strcmp(argv[i], "type_names")) return io_parse_csv(type_names);
+        if (!strcmp(argv[i], "pokemon_stats")) return io_parse_csv(pokemon_stats);
+        if (!strcmp(argv[i], "stats")) return io_parse_csv(stats);
+        if (!strcmp(argv[i], "pokemon_types")) return io_parse_csv(pokemon_types);
+        else usage(argv[0]);
       }
     }
   }

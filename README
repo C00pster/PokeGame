@@ -1,3 +1,6 @@
 This project creates the terrain for an ASCII character based Pokemon game. It uses a queue data structure to generate points and build off of those points in a circle to generate the terrain. The roads and Pokecenter/Pokemarts are placed afterwards.
 
 Running the `make` will create the proper binaries and the project can be run by typing './poke327'
+
+The game can read parsed csv's by running ./poke327 csv_name where csv_name is one of:
+    pokemon, moves, pokemon moves, pokemon species, experience, type names, pokemon stats, stats or pokemon types
