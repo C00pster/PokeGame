@@ -22,7 +22,8 @@ void io_display(void);
 void io_handle_input(pair_t dest);
 void io_queue_message(const char *format, ...);
 void io_battle(character *aggressor, character *defender);
+void io_get_first_pokemon(class pc *player);
 
-int io_parse_csv(csv_files file);
+void io_load_data();
 
 #endif

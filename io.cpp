@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <climits>
 #include <string>
-#include <queue>
+#include <vector>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -299,6 +299,27 @@ static void io_scroll_trainer_list(char (*s)[40], uint32_t count)
   }
 }
 
+std::string num_str(int num) {
+  return num == INT_MAX ? "" : std::to_string(num);
+}
+
+std::string pokemon_to_string (class pokemon *p) {
+  std::string str;
+  str += p->name;
+  str += " Lvl:" + num_str(p->level);
+  str += " HP:" + num_str(p->hp);
+  str += " Atk:" + num_str(p->attack);
+  str += " Def:" + num_str(p->defense);
+  str += " SpAtk:" + num_str(p->special_attack);
+  str += " SpDef:" + num_str(p->special_defense);
+  str += " Spd:" + num_str(p->speed);
+  str += " Moves:";
+  for (class move* m : p->moves) {
+    str += " " + m->name;
+  }
+  return str;
+}
+
 static void io_list_trainers_display(npc **c, uint32_t count)
 {
   uint32_t i;
@@ -391,7 +412,11 @@ void io_battle(character *aggressor, character *defender)
   npc *n = (npc *) ((aggressor == &world.pc) ? defender : aggressor);
 
   io_display();
-  mvprintw(0, 0, "Aww, how'd you get so strong?  You and your pokemon must share a special bond!");
+  io_queue_message("A trainer challenges you to a battle! Pokemon:");
+  for (class pokemon *p : n->pokemon_list) {
+    io_queue_message(pokemon_to_string(p).c_str());
+  }
+  io_print_message_queue(0, 0);
   refresh();
   getch();
 
@@ -460,6 +485,24 @@ uint32_t move_pc_dir(uint32_t input, pair_t dest)
       // Not actually moving, so set dest back to PC position
       dest[dim_x] = world.pc.pos[dim_x];
       dest[dim_y] = world.pc.pos[dim_y];
+    }
+  }
+
+  if (world.cur_map->map[dest[dim_y]][dest[dim_x]] == ter_grass) {
+    if (rand() % 100 < 10) {
+      int distance = abs(world.cur_idx[dim_x] - 200) + abs(world.cur_idx[dim_y] - 200);
+      int level;
+      if (distance <= 200) {
+        level = 1 + rand() % ((distance / 2) + 1);
+      } else {
+        level = ((distance - 200) / 2) + rand() % (101 - ((distance - 200) / 2));
+      }
+      class pokemon *p = get_random_pokemon(level);
+      std::string pokemon_str = "A wild " + p->name + " appeared! (" + pokemon_to_string(p) + ")";
+      mvprintw(0, 0, pokemon_str.c_str());
+      refresh();
+      getch();
+      world.pc.pokemon_list.push_back(p);
     }
   }
   
@@ -635,10 +678,6 @@ void io_handle_input(pair_t dest)
   } while (turn_not_consumed);
 }
 
-std::string num_str(int num) {
-  return num == INT_MAX ? "" : std::to_string(num);
-}
-
 void find_file(const std::string& name, std::ifstream *file) {
   file->open("/share/cs327/pokedex/pokedex/data/csv/" + name);
   if (file->good()) return;
@@ -650,21 +689,11 @@ void find_file(const std::string& name, std::ifstream *file) {
   }
 }
 
-int io_parse_pokemon() {
+std::vector<pokemon_t*>* io_parse_pokemon() {
   using namespace std;
-  typedef struct {
-    int id;
-    string identifier;
-    int species_id;
-    int height;
-    int weight;
-    int base_experience;
-    int order;
-    int is_default;
-  } pokemon;
 
   string first_line;
-  queue<pokemon*> pokemon_list;
+  auto pokemon_list = new vector<pokemon_t*>();
 
   ifstream file;
   find_file("pokemon.csv", &file);
@@ -678,7 +707,7 @@ int io_parse_pokemon() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    pokemon* p = new pokemon;
+    pokemon_t* p = new pokemon_t;
     stringstream ss(line);
     string token;
 
@@ -693,49 +722,23 @@ int io_parse_pokemon() {
     getline(ss, token, ','); // weight
     p->weight = token.empty() ? INT_MAX : stoi(token);
     getline(ss, token, ','); // base_experience
-    p->base_experience = token.empty() ? INT_MAX : stoi(token);
+    p->experience = token.empty() ? INT_MAX : stoi(token);
     getline(ss, token, ','); // order
     p->order = token.empty() ? INT_MAX : stoi(token);
     getline(ss, token, ','); // is_default
     p->is_default = token.empty() ? INT_MAX : stoi(token);
 
-    pokemon_list.push(p);
+    pokemon_list->push_back(p);
   }
 
-  cout << first_line << endl;
-  while (pokemon_list.size() > 0) {
-    pokemon *p = pokemon_list.front();
-    pokemon_list.pop();
-    cout << num_str(p->id) << "," << p->identifier << "," << num_str(p->species_id) << "," << 
-      num_str(p->height) << "," << num_str(p->weight) << "," << num_str(p->base_experience) << "," << 
-      num_str(p->order) << "," << num_str(p->is_default) << endl;
-    delete p;
-  }
-  return 1;
+  return pokemon_list;
 }
 
-int io_parse_moves() {
+std::vector<move_t*>* io_parse_moves() {
   using namespace std;
-  typedef struct {
-    int id;
-    string identifier;
-    int generation_id;
-    int type_id;
-    int power;
-    int pp;
-    int accuracy;
-    int priority;
-    int target_id;
-    int damage_class_id;
-    int effect_id;
-    int effect_chance;
-    int contest_type_id;
-    int contest_effect_id;
-    int super_contest_effect_id;
-  } move;
 
   string first_line;
-  queue<move*> move_list;
+  auto move_list = new vector<move_t*>();
 
   ifstream file;
   find_file("moves.csv", &file);
@@ -749,7 +752,7 @@ int io_parse_moves() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    move* m = new move;
+    move_t* m = new move_t;
     stringstream ss(line);
     string token;
 
@@ -784,37 +787,17 @@ int io_parse_moves() {
     getline(ss, token, ','); // super_contest_effect_id
     m->super_contest_effect_id = token.empty() ? INT_MAX : stoi(token);
 
-    move_list.push(m);
+    move_list->push_back(m);
   }
 
-  cout << first_line << endl;
-  while (move_list.size() > 0) {
-    move *m = move_list.front();
-    move_list.pop();
-    cout << num_str(m->id) << "," << m->identifier << "," << num_str(m->generation_id) << "," << 
-      num_str(m->type_id) << "," << num_str(m->power) << "," << num_str(m->pp) << "," << 
-      num_str(m->accuracy) << "," << num_str(m->priority) << "," << num_str(m->target_id) << "," << 
-      num_str(m->damage_class_id) << "," << num_str(m->effect_id) << "," << num_str(m->effect_chance) << 
-      "," << num_str(m->contest_type_id) << "," << num_str(m->contest_effect_id) << "," << 
-      num_str(m->super_contest_effect_id) << endl;
-    delete m;
-  }
-  return 1;
+  return move_list;
 }
 
-int io_parse_pokemon_moves() {
+std::vector<pokemon_move_t*>* io_parse_pokemon_moves() {
   using namespace std;
-  typedef struct {
-    int pokemon_id;
-    int version_group_id;
-    int move_id;
-    int pokemon_move_method_id;
-    int level;
-    int order;
-  } pokemon_move;
 
   string first_line;
-  queue<pokemon_move*> pokemon_move_list;
+  auto pokemon_move_list = new vector<pokemon_move_t*>();
 
   ifstream file;
   find_file("pokemon_moves.csv", &file);
@@ -828,7 +811,7 @@ int io_parse_pokemon_moves() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    pokemon_move* pm = new pokemon_move;
+    pokemon_move_t* pm = new pokemon_move_t;
     stringstream ss(line);
     string token;
 
@@ -845,48 +828,17 @@ int io_parse_pokemon_moves() {
     getline(ss, token, ','); // order
     pm->order = token.empty() ? INT_MAX : stoi(token);
 
-    pokemon_move_list.push(pm);
+    pokemon_move_list->push_back(pm);
   }
 
-  cout << first_line << endl;
-  while (pokemon_move_list.size() > 0) {
-    pokemon_move *pm = pokemon_move_list.front();
-    pokemon_move_list.pop();
-    cout << num_str(pm->pokemon_id) << "," << num_str(pm->version_group_id) << "," << num_str(pm->move_id) << 
-      "," << num_str(pm->pokemon_move_method_id) << "," << num_str(pm->level) << "," << num_str(pm->order) << 
-      endl;
-    delete pm;
-  }
-  return 1;
+  return pokemon_move_list;
 }
 
-int io_parse_pokemon_species() {
+std::vector<pokemon_species_t*>* io_parse_pokemon_species() {
   using namespace std;
-  typedef struct {
-    int id;
-    string identifier;
-    int generation_id;
-    int evolves_from_species_id;
-    int evolution_chain_id;
-    int color_id;
-    int shape_id;
-    int habitat_id;
-    int gender_rate;
-    int capture_rate;
-    int base_happiness;
-    int is_baby;
-    int hatch_counter;
-    int has_gender_differences;
-    int growth_rate_id;
-    int forms_switchable;
-    int is_legendary;
-    int is_mythical;
-    int order;
-    int conquest_order;
-  } pokemon_species;
 
   string first_line;
-  queue<pokemon_species*> pokemon_species_list;
+  auto pokemon_species_list = new vector<pokemon_species_t*>();
 
   ifstream file;
   find_file("pokemon_species.csv", &file);
@@ -900,7 +852,7 @@ int io_parse_pokemon_species() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    pokemon_species *ps = new pokemon_species;
+    pokemon_species_t *ps = new pokemon_species_t;
     stringstream ss(line);
     string token;
 
@@ -945,36 +897,17 @@ int io_parse_pokemon_species() {
     getline(ss, token, ','); // conquest_order
     ps->conquest_order = token.empty() ? INT_MAX : stoi(token);
 
-    pokemon_species_list.push(ps);
+    pokemon_species_list->push_back(ps);
   }
 
-  cout << first_line << endl;
-  while (pokemon_species_list.size() > 0) {
-    pokemon_species *ps = pokemon_species_list.front();
-    pokemon_species_list.pop();
-    cout << num_str(ps->id) << "," << ps->identifier << "," << num_str(ps->generation_id) << "," << 
-      num_str(ps->evolves_from_species_id) << "," << num_str(ps->evolution_chain_id) << "," << 
-      num_str(ps->color_id) << "," << num_str(ps->shape_id) << "," << num_str(ps->habitat_id) << "," << 
-      num_str(ps->gender_rate) << "," << num_str(ps->base_happiness) << "," << num_str(ps->is_baby) << 
-      "," << num_str(ps->hatch_counter) << "," << num_str(ps->has_gender_differences) << "," << 
-      num_str(ps->growth_rate_id) << "," << num_str(ps->forms_switchable) << "," << 
-      num_str(ps->is_legendary) << "," << num_str(ps->is_mythical) << "," << num_str(ps->order) << "," <<
-      num_str(ps->conquest_order) << endl;
-    delete ps;
-  }
-  return 1;
+  return pokemon_species_list;
 }
 
-int io_parse_experience() {
+std::vector<experience_t*>* io_parse_experience() {
   using namespace std;
-  typedef struct {
-    int growth_rate_id;
-    int level;
-    int experience;
-  } experience;
   
   string first_line;
-  queue<experience*> experience_list;
+  auto experience_list = new vector<experience_t*>();
 
   ifstream file;
   find_file("experience.csv", &file);
@@ -988,7 +921,7 @@ int io_parse_experience() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    experience* e = new experience;
+    experience_t* e = new experience_t;
     stringstream ss(line);
     string token;
 
@@ -999,29 +932,17 @@ int io_parse_experience() {
     getline(ss, token, ','); // experience
     e->experience = token.empty() ? INT_MAX : stoi(token);
 
-    experience_list.push(e);
+    experience_list->push_back(e);
   }
 
-  cout << first_line << endl;
-  while (experience_list.size() > 0) {
-    experience *e = experience_list.front();
-    experience_list.pop();
-    cout << num_str(e->growth_rate_id) << "," << num_str(e->level) << "," << num_str(e->experience) << endl;
-    delete e;
-  }
-  return 1;
+  return experience_list;
 }
 
-int io_parse_type_names() {
+std::vector<type_name_t*>* io_parse_type_names() {
   using namespace std;
-  typedef struct {
-    int type_id;
-    int local_language_id;
-    string name;
-  } type_name;
 
   string first_line;
-  queue<type_name*> type_name_list;
+  auto type_name_list = new vector<type_name_t*>();
 
   ifstream file;
   find_file("type_names.csv", &file);
@@ -1035,7 +956,7 @@ int io_parse_type_names() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    type_name* tn = new type_name;
+    type_name_t* tn = new type_name_t;
     stringstream ss(line);
     string token;
 
@@ -1046,30 +967,17 @@ int io_parse_type_names() {
     getline(ss, token, ','); // name
     tn->name = token;
 
-    type_name_list.push(tn);
+    type_name_list->push_back(tn);
   }
 
-  cout << first_line << endl;
-  while (type_name_list.size() > 0) {
-    type_name *tn = type_name_list.front();
-    type_name_list.pop();
-    cout << num_str(tn->type_id) << "," << num_str(tn->local_language_id) << "," << tn->name << endl;
-    delete tn;
-  }
-  return 1;
+  return type_name_list;
 }
 
-int io_parse_pokemon_stats() {
+std::vector<pokemon_stat_t*>* io_parse_pokemon_stats() {
   using namespace std;
-  typedef struct {
-    int pokemon_id;
-    int stat_id;
-    int base_stat;
-    int effort;
-  } pokemon_stat;
 
   string first_line;
-  queue<pokemon_stat*> pokemon_stat_list;
+  auto pokemon_stat_list = new vector<pokemon_stat_t*>();
 
   ifstream file;
   find_file("pokemon_stats.csv", &file);
@@ -1083,7 +991,7 @@ int io_parse_pokemon_stats() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    pokemon_stat* ps = new pokemon_stat;
+    pokemon_stat_t* ps = new pokemon_stat_t;
     stringstream ss(line);
     string token;
 
@@ -1096,31 +1004,17 @@ int io_parse_pokemon_stats() {
     getline(ss, token, ','); // effort
     ps->effort = token.empty() ? INT_MAX : stoi(token);
 
-    pokemon_stat_list.push(ps);
+    pokemon_stat_list->push_back(ps);
   }
 
-  cout << first_line << endl;
-  while (pokemon_stat_list.size() > 0) {
-    pokemon_stat *ps = pokemon_stat_list.front();
-    pokemon_stat_list.pop();
-    cout << num_str(ps->pokemon_id) << "," << num_str(ps->stat_id) << "," << num_str(ps->base_stat) << "," << 
-      num_str(ps->effort) << endl;
-  }
-  return 1;
+  return pokemon_stat_list;
 }
 
-int io_parse_stats() {
+std::vector<stat_t*>* io_parse_stats() {
   using namespace std;
-  typedef struct {
-    int id;
-    int damage_class_id;
-    string identifier;
-    int is_battle_only;
-    int game_index;
-  } stat;
 
   string first_line;
-  queue<stat*> stat_list;
+  auto stat_list = new vector<stat_t*>();
 
   ifstream file;
   find_file("stats.csv", &file);
@@ -1134,7 +1028,7 @@ int io_parse_stats() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    stat* s = new stat;
+    stat_t* s = new stat_t;
     stringstream ss(line);
     string token;
 
@@ -1149,29 +1043,17 @@ int io_parse_stats() {
     getline(ss, token, ','); // game_index
     s->game_index = token.empty() ? INT_MAX : stoi(token);
 
-    stat_list.push(s);
+    stat_list->push_back(s);
   }
 
-  cout << first_line << endl;
-  while (stat_list.size() > 0) {
-    stat *s = stat_list.front();
-    stat_list.pop();
-    cout << num_str(s->id) << "," << num_str(s->damage_class_id) << "," << s->identifier << "," << 
-      num_str(s->is_battle_only) << "," << num_str(s->game_index) << endl;
-  }
-  return 1;
+  return stat_list;
 }
 
-int io_parse_pokemon_types() {
+std::vector<pokemon_type_t*>* io_parse_pokemon_types() {
   using namespace std;
-  typedef struct {
-    int pokemon_id;
-    int type_id;
-    int slot;
-  } pokemon_type;
 
   string first_line;
-  queue<pokemon_type*> pokemon_type_list;
+  auto pokemon_type_list = new vector<pokemon_type_t*>();
 
   ifstream file;
   find_file("pokemon_types.csv", &file);
@@ -1185,7 +1067,7 @@ int io_parse_pokemon_types() {
   getline(file, first_line);
 
   while (getline(file, line)) {
-    pokemon_type* pt = new pokemon_type;
+    pokemon_type_t* pt = new pokemon_type_t;
     stringstream ss(line);
     string token;
 
@@ -1196,38 +1078,51 @@ int io_parse_pokemon_types() {
     getline(ss, token, ','); // slot
     pt->slot = token.empty() ? INT_MAX : stoi(token);
 
-    pokemon_type_list.push(pt);
+    pokemon_type_list->push_back(pt);
   }
 
-  cout << first_line << endl;
-  while (pokemon_type_list.size() > 0) {
-    pokemon_type *pt = pokemon_type_list.front();
-    pokemon_type_list.pop();
-    cout << num_str(pt->pokemon_id) << "," << num_str(pt->type_id) << "," << num_str(pt->slot) << endl;
-  }
-  return 1;
+  return pokemon_type_list;
 }
 
-int io_parse_csv(csv_files file) {
-  switch (file) {
-    case pokemon:
-      return io_parse_pokemon();
-    case moves:
-      return io_parse_moves();
-    case pokemon_moves:
-      return io_parse_pokemon_moves();
-    case pokemon_species:
-      return io_parse_pokemon_species();
-    case experience:
-      return io_parse_experience();
-    case type_names:
-      return io_parse_type_names();
-    case pokemon_stats:
-      return io_parse_pokemon_stats();
-    case stats:
-      return io_parse_stats();
-    case pokemon_types:
-      return io_parse_pokemon_types();
+void io_load_data() {
+  world.data.pokemon = io_parse_pokemon();
+  world.data.moves = io_parse_moves();
+  world.data.pokemon_moves = io_parse_pokemon_moves();
+  world.data.pokemon_species = io_parse_pokemon_species();
+  world.data.experience = io_parse_experience();
+  world.data.type_names = io_parse_type_names();
+  world.data.pokemon_stats = io_parse_pokemon_stats();
+  world.data.stats = io_parse_stats();
+  world.data.pokemon_types = io_parse_pokemon_types();
+}
+
+void io_get_first_pokemon(class pc *player) {
+  clear();
+
+  mvprintw(0, 0, "Welcome to the world of Pokemon! Please choose a pokemon from the list below by entering 1, 2, or 3");
+  class pokemon *p1 = get_random_pokemon(1);
+  class pokemon *p2 = get_random_pokemon(1);
+  class pokemon *p3 = get_random_pokemon(1);
+
+  std::string p1_str = pokemon_to_string(p1);
+  std::string p2_str = pokemon_to_string(p2);
+  std::string p3_str = pokemon_to_string(p3);  
+
+  mvprintw(1, 0, "1. %s", p1_str.c_str());
+  mvprintw(2, 0, "2. %s", p2_str.c_str());
+  mvprintw(3, 0, "3. %s", p3_str.c_str());
+  mvprintw(4, 0, "Enter your choice: ");
+
+  char input = getch();
+  while (input != '1' && input != '2' && input != '3') {
+    input = getch();
   }
-  return 0;
+
+  if (input == '1') {
+    player->pokemon_list.push_back(p1);
+  } else if (input == '2') {
+    player->pokemon_list.push_back(p2);
+  } else {
+    player->pokemon_list.push_back(p3);
+  }
 }

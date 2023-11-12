@@ -657,3 +657,19 @@ void pathfind(map *m)
   }
   heap_delete(&h);
 }
+
+void add_pokemon_to_npc(npc *c, int distance) {
+  int level;
+  int counter = 0;
+  int chance = 100;
+  while (chance > 40 && counter < 6) {
+    if (distance <= 200) {
+      level = 1 + rand() % ((distance / 2) + 1);
+    } else {
+      level = ((distance - 200) / 2) + rand() % (101 - ((distance - 200) / 2));
+    }
+    c->pokemon_list.push_back(get_random_pokemon(level));
+    counter++;
+    chance = rand() % 100;
+  }
+}

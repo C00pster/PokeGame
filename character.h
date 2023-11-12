@@ -2,8 +2,10 @@
 # define CHARACTER_H
 
 # include <cstdint>
+# include <vector>
 
 # include "pair.h"
+# include "data.h"
 
 #define DIJKSTRA_PATH_MAX (INT_MAX / 2)
 
@@ -37,6 +39,7 @@ class character {
   char symbol;
   int next_turn;
   int seq_num;
+  std::vector<class pokemon*> pokemon_list;
 };
 
 class npc : public character {
@@ -46,6 +49,8 @@ class npc : public character {
   int defeated;
   pair_t dir;
 };
+
+void add_pokemon_to_npc(npc *n, int distance);
 
 class pc : public character {
 };

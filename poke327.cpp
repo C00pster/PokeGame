@@ -732,6 +732,11 @@ void rand_pos(pair_t pos)
   pos[dim_y] = (rand() % (MAP_Y - 2)) + 1;
 }
 
+class pokemon* get_random_pokemon(int level) {
+  class pokemon *p = new class pokemon(rand() % ((int) world.data.pokemon_species->size()), level);
+  return p;
+}
+
 void new_hiker()
 {
   pair_t pos;
@@ -755,6 +760,15 @@ void new_hiker()
   c->symbol = HIKER_SYMBOL;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
+  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
+
+  int counter = 0;
+  int rand_num = 100;
+  while (counter < 6 && rand_num < 60) {
+    class pokemon *p = get_random_pokemon(1);
+    c->pokemon_list.push_back(p);
+  }
+
   heap_insert(&world.cur_map->turn, c);
 }
 
@@ -782,6 +796,8 @@ void new_rival()
   c->symbol = RIVAL_SYMBOL;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
+  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
+
   heap_insert(&world.cur_map->turn, c);
 }
 
@@ -805,6 +821,8 @@ void new_swimmer()
   c->symbol = SWIMMER_SYMBOL;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
+  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
+
   heap_insert(&world.cur_map->turn, c);
 }
 
@@ -847,6 +865,8 @@ void new_char_other()
   c->defeated = 0;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
+  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
+
   heap_insert(&world.cur_map->turn, c);
 }
 
@@ -901,6 +921,8 @@ void init_pc()
   world.pc.seq_num = world.char_seq_num++;
 
   heap_insert(&world.cur_map->turn, &world.pc);
+
+  io_get_first_pokemon(&world.pc);
 }
 
 void place_pc()
@@ -1176,19 +1198,12 @@ int main(int argc, char *argv[])
           usage(argv[0]);
         }
       } else { /* No dash */
-        if (!strcmp(argv[i], "pokemon")) return io_parse_csv(pokemon);
-        if (!strcmp(argv[i], "moves")) return io_parse_csv(moves);
-        if (!strcmp(argv[i], "pokemon_moves")) return io_parse_csv(pokemon_moves);
-        if (!strcmp(argv[i], "pokemon_species")) return io_parse_csv(pokemon_species);
-        if (!strcmp(argv[i], "experience")) return io_parse_csv(experience);
-        if (!strcmp(argv[i], "type_names")) return io_parse_csv(type_names);
-        if (!strcmp(argv[i], "pokemon_stats")) return io_parse_csv(pokemon_stats);
-        if (!strcmp(argv[i], "stats")) return io_parse_csv(stats);
-        if (!strcmp(argv[i], "pokemon_types")) return io_parse_csv(pokemon_types);
-        else usage(argv[0]);
+        usage(argv[0]);
       }
     }
   }
+
+  io_load_data();
 
   if (do_seed) {
     /* Allows me to start the game more than once *
@@ -1203,69 +1218,6 @@ int main(int argc, char *argv[])
   io_init_terminal();
   
   init_world();
-
-  /* print_hiker_dist(); */
-  
-  /*
-  do {
-    print_map();  
-    printf("Current position is %d%cx%d%c (%d,%d).  "
-           "Enter command: ",
-           abs(world.cur_idx[dim_x] - (WORLD_SIZE / 2)),
-           world.cur_idx[dim_x] - (WORLD_SIZE / 2) >= 0 ? 'E' : 'W',
-           abs(world.cur_idx[dim_y] - (WORLD_SIZE / 2)),
-           world.cur_idx[dim_y] - (WORLD_SIZE / 2) <= 0 ? 'N' : 'S',
-           world.cur_idx[dim_x] - (WORLD_SIZE / 2),
-           world.cur_idx[dim_y] - (WORLD_SIZE / 2));
-    scanf(" %c", &c);
-    switch (c) {
-    case 'n':
-      if (world.cur_idx[dim_y]) {
-        world.cur_idx[dim_y]--;
-        new_map();
-      }
-      break;
-    case 's':
-      if (world.cur_idx[dim_y] < WORLD_SIZE - 1) {
-        world.cur_idx[dim_y]++;
-        new_map();
-      }
-      break;
-    case 'e':
-      if (world.cur_idx[dim_x] < WORLD_SIZE - 1) {
-        world.cur_idx[dim_x]++;
-        new_map();
-      }
-      break;
-    case 'w':
-      if (world.cur_idx[dim_x]) {
-        world.cur_idx[dim_x]--;
-        new_map();
-      }
-      break;
-     case 'q':
-      break;
-    case 'f':
-      scanf(" %d %d", &x, &y);
-      if (x >= -(WORLD_SIZE / 2) && x <= WORLD_SIZE / 2 &&
-          y >= -(WORLD_SIZE / 2) && y <= WORLD_SIZE / 2) {
-        world.cur_idx[dim_x] = x + (WORLD_SIZE / 2);
-        world.cur_idx[dim_y] = y + (WORLD_SIZE / 2);
-        new_map();
-      }
-      break;
-    case '?':
-    case 'h':
-      printf("Move with 'e'ast, 'w'est, 'n'orth, 's'outh or 'f'ly x y.\n"
-             "Quit with 'q'.  '?' and 'h' print this help message.\n");
-      break;
-    default:
-      fprintf(stderr, "%c: Invalid input.  Enter '?' for help.\n", c);
-      break;
-    }
-  } while (c != 'q');
-
-  */
 
   game_loop();
   
