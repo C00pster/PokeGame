@@ -3,6 +3,7 @@
 #include "character.h"
 #include "poke327.h"
 #include "io.h"
+#include "pokemon.h"
 
 /* Just to make the following table fit in 80 columns */
 #define PM DIJKSTRA_PATH_MAX
@@ -311,7 +312,7 @@ static void move_swimmer_func(character *c, pair_t dest)
   dest[dim_x] = c->pos[dim_x];
   dest[dim_y] = c->pos[dim_y];
 
-  if (n->defeated != 1 && is_adjacent(world.pc.pos, ter_water) &&
+  if (is_adjacent(world.pc.pos, ter_water) &&
       can_see(world.cur_map, c, &world.pc)) {
     /* PC is next to this body of water; swim to the PC */
 
@@ -404,6 +405,17 @@ int32_t cmp_char_turns(const void *key, const void *with)
            ((character *) with)->seq_num)    :
           (((character *) key)->next_turn -
            ((character *) with)->next_turn));
+}
+
+character::~character()
+{
+  int i;
+
+  for (i = 0; i < 6; i++) {
+    if (buddy[i]) {
+      delete buddy[i];
+    }
+  }
 }
 
 void delete_character(void *v)
@@ -658,18 +670,11 @@ void pathfind(map *m)
   heap_delete(&h);
 }
 
-void add_pokemon_to_npc(npc *c, int distance) {
-  int level;
-  int counter = 0;
-  int chance = 100;
-  while (chance > 40 && counter < 6) {
-    if (distance <= 200) {
-      level = 1 + rand() % ((distance / 2) + 1);
-    } else {
-      level = ((distance - 200) / 2) + rand() % (101 - ((distance - 200) / 2));
+bool character_defeated(character *c) {
+  for (int i = 0; i < 6; i++) {
+    if (c->buddy[i] && c->buddy[i]->get_hp() > 0) {
+      return false;
     }
-    c->pokemon_list.push_back(get_random_pokemon(level));
-    counter++;
-    chance = rand() % 100;
   }
+  return true;
 }

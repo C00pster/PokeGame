@@ -13,6 +13,8 @@
 #include "poke327.h"
 #include "character.h"
 #include "io.h"
+#include "db_parse.h"
+#include "pokemon.h"
 
 typedef struct queue_node {
   int x, y;
@@ -697,8 +699,7 @@ static int place_boulders(map *m)
     x = rand() % (MAP_X - 2) + 1;
     if (m->map[y][x] != ter_forest &&
         m->map[y][x] != ter_path   &&
-        m->map[y][x] != ter_gate   &&
-        m->map[y][x] != ter_bailey) {
+        m->map[y][x] != ter_gate) {
       m->map[y][x] = ter_boulder;
     }
   }
@@ -717,8 +718,7 @@ static int place_trees(map *m)
     if (m->map[y][x] != ter_mountain &&
         m->map[y][x] != ter_path     &&
         m->map[y][x] != ter_water    &&
-        m->map[y][x] != ter_gate     &&
-        m->map[y][x] != ter_bailey) {
+        m->map[y][x] != ter_gate) {
       m->map[y][x] = ter_tree;
     }
   }
@@ -732,9 +732,18 @@ void rand_pos(pair_t pos)
   pos[dim_y] = (rand() % (MAP_Y - 2)) + 1;
 }
 
-class pokemon* get_random_pokemon(int level) {
-  class pokemon *p = new class pokemon(rand() % ((int) world.data.pokemon_species->size()), level);
-  return p;
+static void make_buddies(npc *c)
+{
+  int i;
+
+  i = 0;
+  do {
+    c->buddy[i] = new class pokemon();
+    i++;
+  } while ((i < 6) && ((rand() % 100) < ADD_TRAINER_POK_PROB));
+  for (; i < 6; i++) {
+    c->buddy[i] = NULL;
+  }
 }
 
 void new_hiker()
@@ -760,16 +769,8 @@ void new_hiker()
   c->symbol = HIKER_SYMBOL;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
-  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
-
-  int counter = 0;
-  int rand_num = 100;
-  while (counter < 6 && rand_num < 60) {
-    class pokemon *p = get_random_pokemon(1);
-    c->pokemon_list.push_back(p);
-  }
-
   heap_insert(&world.cur_map->turn, c);
+  make_buddies(c);
 }
 
 void new_rival()
@@ -796,9 +797,8 @@ void new_rival()
   c->symbol = RIVAL_SYMBOL;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
-  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
-
   heap_insert(&world.cur_map->turn, c);
+  make_buddies(c);
 }
 
 void new_swimmer()
@@ -821,9 +821,8 @@ void new_swimmer()
   c->symbol = SWIMMER_SYMBOL;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
-  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
-
   heap_insert(&world.cur_map->turn, c);
+  make_buddies(c);
 }
 
 void new_char_other()
@@ -865,9 +864,8 @@ void new_char_other()
   c->defeated = 0;
   c->next_turn = 0;
   c->seq_num = world.char_seq_num++;
-  add_pokemon_to_npc(c, abs(world.cur_idx[0] - 200) + abs(world.cur_idx[1] - 200));
-
   heap_insert(&world.cur_map->turn, c);
+  make_buddies(c);
 }
 
 void place_characters()
@@ -922,7 +920,7 @@ void init_pc()
 
   heap_insert(&world.cur_map->turn, &world.pc);
 
-  io_get_first_pokemon(&world.pc);
+  io_choose_starter();
 }
 
 void place_pc()
@@ -1151,6 +1149,12 @@ void game_loop()
     c->next_turn += move_cost[n ? n->ctype : char_pc]
                              [world.cur_map->map[d[dim_y]][d[dim_x]]];
 
+    if (p && (c->pos[dim_y] != d[dim_y] || c->pos[dim_x] != d[dim_x]) &&
+        (world.cur_map->map[d[dim_y]][d[dim_x]] == ter_grass) &&
+        (rand() % 100 < ENCOUNTER_PROB)) {
+      io_encounter_pokemon();
+    }
+
     c->pos[dim_y] = d[dim_y];
     c->pos[dim_x] = d[dim_x];
 
@@ -1203,8 +1207,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  io_load_data();
-
   if (do_seed) {
     /* Allows me to start the game more than once *
      * per second, as opposed to time().          */
@@ -1215,9 +1217,74 @@ int main(int argc, char *argv[])
   printf("Using seed: %u\n", seed);
   srand(seed);
 
+  db_parse(false);
+  
   io_init_terminal();
   
   init_world();
+
+  /* print_hiker_dist(); */
+  
+  /*
+  do {
+    print_map();  
+    printf("Current position is %d%cx%d%c (%d,%d).  "
+           "Enter command: ",
+           abs(world.cur_idx[dim_x] - (WORLD_SIZE / 2)),
+           world.cur_idx[dim_x] - (WORLD_SIZE / 2) >= 0 ? 'E' : 'W',
+           abs(world.cur_idx[dim_y] - (WORLD_SIZE / 2)),
+           world.cur_idx[dim_y] - (WORLD_SIZE / 2) <= 0 ? 'N' : 'S',
+           world.cur_idx[dim_x] - (WORLD_SIZE / 2),
+           world.cur_idx[dim_y] - (WORLD_SIZE / 2));
+    scanf(" %c", &c);
+    switch (c) {
+    case 'n':
+      if (world.cur_idx[dim_y]) {
+        world.cur_idx[dim_y]--;
+        new_map();
+      }
+      break;
+    case 's':
+      if (world.cur_idx[dim_y] < WORLD_SIZE - 1) {
+        world.cur_idx[dim_y]++;
+        new_map();
+      }
+      break;
+    case 'e':
+      if (world.cur_idx[dim_x] < WORLD_SIZE - 1) {
+        world.cur_idx[dim_x]++;
+        new_map();
+      }
+      break;
+    case 'w':
+      if (world.cur_idx[dim_x]) {
+        world.cur_idx[dim_x]--;
+        new_map();
+      }
+      break;
+     case 'q':
+      break;
+    case 'f':
+      scanf(" %d %d", &x, &y);
+      if (x >= -(WORLD_SIZE / 2) && x <= WORLD_SIZE / 2 &&
+          y >= -(WORLD_SIZE / 2) && y <= WORLD_SIZE / 2) {
+        world.cur_idx[dim_x] = x + (WORLD_SIZE / 2);
+        world.cur_idx[dim_y] = y + (WORLD_SIZE / 2);
+        new_map();
+      }
+      break;
+    case '?':
+    case 'h':
+      printf("Move with 'e'ast, 'w'est, 'n'orth, 's'outh or 'f'ly x y.\n"
+             "Quit with 'q'.  '?' and 'h' print this help message.\n");
+      break;
+    default:
+      fprintf(stderr, "%c: Invalid input.  Enter '?' for help.\n", c);
+      break;
+    }
+  } while (c != 'q');
+
+  */
 
   game_loop();
   
